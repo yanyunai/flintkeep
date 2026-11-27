@@ -1,0 +1,2896 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FlintKeep — The encrypted vault that never leaves your device</title>
+    <meta
+      name="description"
+      content="FlintKeep: a local-first vault for credentials and assets. Servers, platform accounts and API keys encrypted with AES-256-GCM on your own machine. An AI assistant helps you use them — data never leaves the device. Open source, auditable."
+    />
+    <meta name="theme-color" content="#0b0c0a" />
+    <meta property="og:title" content="FlintKeep — The encrypted vault that never leaves your device" />
+    <meta
+      property="og:description"
+      content="AES-256-GCM on-device encryption · Native AI assistant (MCP) · AGPL-3.0 open source"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="assets/app-assets-zh.jpg" />
+    <meta property="og:image:alt" content="FlintKeep asset inventory screen" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="FlintKeep — The encrypted vault that never leaves your device" />
+    <meta
+      name="twitter:description"
+      content="Local-first vault for credentials and assets. AES-256-GCM on your device. AGPL-3.0 open source."
+    />
+    <meta name="twitter:image" content="assets/app-assets-zh.jpg" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23c6f24e'/%3E%3Crect x='9' y='14' width='14' height='11' rx='2.6' fill='none' stroke='%2310120a' stroke-width='2.4'/%3E%3Cpath d='M12 14v-3.2a4 4 0 0 1 8 0V14' fill='none' stroke='%2310120a' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='19' r='1.7' fill='%2310120a'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        --bg: #0b0c0a;
+        --panel: #121410;
+        --panel-2: #171a14;
+        --line: rgba(255, 255, 255, 0.1);
+        --line-2: rgba(255, 255, 255, 0.18);
+        --text: #ececea;
+        --text-2: #b9b9b4;
+        --text-3: #8b8b85;
+        --accent: #c6f24e;
+        --accent-ink: #10120a;
+        --danger: #d0453b;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+        --maxw: 1080px;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 15.5px;
+        line-height: 1.7;
+        -webkit-font-smoothing: antialiased;
+        background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.045) 1px, transparent 0);
+        background-size: 26px 26px;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .kicker {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      .kicker.dim {
+        color: var(--text-3);
+      }
+      .arr-ic {
+        width: 11px;
+        height: 11px;
+        flex: none;
+      }
+
+      /* ===== 导航 ===== */
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(11, 12, 10, 0.82);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+      .nav-inner {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        height: 58px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .brand svg {
+        display: block;
+      }
+      .brand small {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-3);
+        font-weight: 400;
+        letter-spacing: 0.08em;
+      }
+      .nav-links {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        font-size: 13.5px;
+        color: var(--text-2);
+      }
+      .nav-links > a:not(.nav-cta) {
+        display: inline-flex;
+        align-items: center;
+        height: 34px;
+      }
+      .nav-links a:hover {
+        color: var(--accent);
+      }
+      .nav-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 34px;
+        padding: 0 16px;
+        border: 1px solid var(--line-2);
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text) !important;
+        transition:
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .nav-cta:hover {
+        border-color: var(--accent);
+        color: var(--accent) !important;
+      }
+      .lang {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        overflow: hidden;
+        height: 34px;
+      }
+      .lang button {
+        border: 0;
+        background: transparent;
+        color: var(--text-3);
+        padding: 0 12px;
+        height: 100%;
+        font-size: 12px;
+        font-family: var(--sans);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .lang button.on {
+        background: var(--accent);
+        color: var(--accent-ink);
+        font-weight: 600;
+      }
+
+      /* ===== Hero ===== */
+      .hero {
+        padding: 92px 0 64px;
+        text-align: center;
+      }
+      .hero h1 {
+        font-size: clamp(34px, 6vw, 56px);
+        line-height: 1.18;
+        letter-spacing: -0.01em;
+        margin: 18px auto 20px;
+        max-width: 760px;
+        font-weight: 800;
+      }
+      .hero h1 em {
+        font-style: normal;
+        color: var(--accent);
+      }
+      .hero .sub {
+        max-width: 660px;
+        margin: 0 auto 34px;
+        color: var(--text-2);
+        font-size: 16.5px;
+      }
+      .hero .sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .cta-row {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 46px;
+        padding: 0 26px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid var(--line-2);
+        color: var(--text);
+        background: transparent;
+        transition: all 0.15s;
+      }
+      .btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-ink);
+        box-shadow: 0 6px 24px rgba(198, 242, 78, 0.18);
+      }
+      .btn.primary:hover {
+        filter: brightness(1.06);
+        color: var(--accent-ink);
+      }
+      .chips {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 26px;
+      }
+      .chip {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        color: var(--text-2);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 14px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .chip i {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        margin-right: 7px;
+        vertical-align: 1px;
+      }
+
+      /* ===== 状态条（呼应应用内保险库状态栏） ===== */
+      .statusbar-wrap {
+        max-width: 820px;
+        margin: 40px auto 0;
+      }
+      .statusbar {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        padding: 12px 18px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        color: var(--text-3);
+        text-transform: uppercase;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      }
+      .statusbar .live {
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .statusbar .live i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 10px rgba(198, 242, 78, 0.8);
+        animation: breathe 2.6s infinite;
+      }
+      @keyframes breathe {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.35;
+        }
+      }
+      .statusbar .sp {
+        flex: 1;
+      }
+      .statusbar .off {
+        color: var(--danger);
+      }
+
+      /* ===== 通用 section ===== */
+      section {
+        padding: 72px 0;
+      }
+      .sec-head {
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(24px, 3.6vw, 32px);
+        letter-spacing: -0.01em;
+        margin-top: 12px;
+      }
+      .sec-head p {
+        color: var(--text-2);
+        margin-top: 10px;
+        max-width: 620px;
+      }
+
+      /* ===== 产品截图：浏览器窗框 + 灯箱 ===== */
+      .deck {
+        position: relative;
+      }
+      .deck-stage {
+        --deck-h: 430px; /* JS 按卡片实际高度回填，任何宽度都不裁切 */
+        --deck-w: 62%; /* 中间那张占容器宽度，窄屏档位更大 */
+        position: relative;
+        width: 100%;
+        height: var(--deck-h);
+        overflow: hidden;
+        perspective: 1700px;
+        perspective-origin: 50% 46%;
+        transform-style: preserve-3d;
+      }
+      .deck-stage::before,
+      .deck-stage::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 6%;
+        z-index: 30;
+        pointer-events: none;
+      }
+      .deck-stage::before {
+        left: 0;
+        background: linear-gradient(90deg, var(--bg), rgba(11, 12, 10, 0));
+      }
+      .deck-stage::after {
+        right: 0;
+        background: linear-gradient(270deg, var(--bg), rgba(11, 12, 10, 0));
+      }
+      .deck-stage .shot {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: var(--deck-w);
+        max-width: 780px;
+        margin: 0;
+        transform: translate(-50%, -50%);
+        transform-origin: center center;
+        transition:
+          transform 0.68s cubic-bezier(0.22, 0.61, 0.36, 1),
+          opacity 0.5s ease,
+          filter 0.5s ease;
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+      .deck-stage .shot.is-active {
+        pointer-events: auto;
+      }
+      .deck-stage .shot.is-side {
+        pointer-events: auto;
+        cursor: pointer;
+      }
+      .deck-stage .shot.is-active .frame {
+        box-shadow: 0 30px 76px rgba(0, 0, 0, 0.6);
+      }
+      .deck-stage .shot .frame {
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.5);
+      }
+      .deck-ui {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .deck-btn {
+        width: 42px;
+        height: 42px;
+        flex: none;
+        border-radius: 50%;
+        border: 1px solid var(--line-2);
+        background: rgba(18, 20, 16, 0.9);
+        color: var(--text);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .deck-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .deck-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .deck-mid {
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+      }
+      .deck-cap {
+        font-size: 14px;
+        color: var(--text-2);
+        min-height: 22px;
+      }
+      .deck-cap b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .deck-dots {
+        display: flex;
+        gap: 9px;
+        justify-content: center;
+        margin-top: 10px;
+      }
+      .deck-dot {
+        width: 7px;
+        height: 7px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.24);
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.2s;
+      }
+      .deck-dot.on {
+        background: var(--accent);
+        transform: scale(1.4);
+      }
+      .deck-dot:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .shot {
+        margin: 0;
+        min-width: 0;
+      }
+      .shot .frame {
+        position: relative;
+        display: block;
+        width: 100%;
+        padding: 0;
+        text-align: left;
+        border: 1px solid var(--line-2);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #ecebe6;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+        cursor: zoom-in;
+        transition:
+          border-color 0.18s,
+          transform 0.18s,
+          box-shadow 0.18s;
+      }
+      .shot .frame:hover {
+        border-color: rgba(198, 242, 78, 0.55);
+        transform: translateY(-2px);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.58);
+      }
+      .shot .frame:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      .shot .bar {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 12px;
+        background: #e2dfd6;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      }
+      .shot .bar .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex: none;
+      }
+      .shot .bar .u {
+        flex: 1;
+        margin-left: 6px;
+        background: #fff;
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: #8b8b85;
+        padding: 4px 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .shot img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 5 / 3;
+        object-fit: cover;
+        object-position: top left;
+        background: #ecebe6;
+      }
+      .shot .zoom {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        padding: 5px 11px;
+        border-radius: 999px;
+        background: rgba(11, 12, 10, 0.78);
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #ececea;
+        opacity: 0;
+        transition: opacity 0.18s;
+        pointer-events: none;
+      }
+      .shot .frame:hover .zoom,
+      .shot .frame:focus-visible .zoom {
+        opacity: 1;
+      }
+      .shot figcaption {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--text-2);
+        text-align: center;
+      }
+      .shot figcaption b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .shot-hint {
+        margin-top: 22px;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-3);
+      }
+      .shot-hint b {
+        color: var(--accent);
+        font-weight: 500;
+      }
+      /* 触屏设备没有 hover，"移入暂停"这句不显示，免得误导 */
+      @media (hover: none) {
+        .hint-hover {
+          display: none;
+        }
+      }
+
+      /* ===== 幻灯片控件：序号 + 自动播放进度 ===== */
+      .deck-cap {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 10px;
+        font-size: 14.5px;
+        color: var(--text-2);
+        min-height: 24px;
+      }
+      .deck-idx {
+        flex: none;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        color: var(--text-3);
+      }
+      .deck-prog {
+        width: 100%;
+        max-width: 260px;
+        height: 2px;
+        margin: 14px auto 0;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+      .deck-prog i {
+        display: block;
+        width: 0;
+        height: 100%;
+        border-radius: 2px;
+        background: var(--accent);
+      }
+
+      /* ===== 设计介绍：分层架构 / 取舍 / 对比 ===== */
+      .arch {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+        overflow: hidden;
+      }
+      .arch-row {
+        display: grid;
+        grid-template-columns: 138px minmax(0, 1fr);
+      }
+      .arch-row + .arch-row {
+        border-top: 1px solid var(--line);
+      }
+      .arch-k {
+        display: flex;
+        align-items: center;
+        padding: 14px 18px;
+        border-right: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-3);
+      }
+      .arch-v {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        padding: 13px 18px;
+      }
+      .arch-v .n {
+        border: 1px solid var(--line-2);
+        border-radius: 8px;
+        padding: 6px 11px;
+        background: var(--panel-2);
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--text-2);
+      }
+      .arch-v .n.hl {
+        border-color: rgba(198, 242, 78, 0.45);
+        color: var(--accent);
+      }
+      .arch-v code {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: inherit;
+      }
+      .secure-grid.tight {
+        margin-top: 26px;
+      }
+      .stack {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+        margin-top: 26px;
+      }
+      .stack-k {
+        margin-right: 4px;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-3);
+      }
+      .stack .chip {
+        padding: 5px 11px;
+        font-size: 11px;
+      }
+      .cmp {
+        margin-top: 40px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+        overflow: hidden;
+      }
+      .cmp-head {
+        padding: 20px 22px 0;
+      }
+      .cmp-head h3 {
+        font-size: 17px;
+      }
+      .cmp-scroll {
+        overflow-x: auto;
+      }
+      .cmp table {
+        width: 100%;
+        min-width: 560px;
+        margin-top: 16px;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .cmp th,
+      .cmp td {
+        padding: 11px 22px;
+        border-top: 1px solid var(--line);
+        text-align: left;
+      }
+      .cmp thead th {
+        border-top: 0;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-3);
+      }
+      .cmp tbody th {
+        font-weight: 500;
+        color: var(--text-2);
+      }
+      .cmp td {
+        color: var(--text-3);
+      }
+      .cmp .me {
+        background: rgba(198, 242, 78, 0.05);
+        color: var(--text);
+      }
+      .cmp td.me {
+        font-family: var(--mono);
+        color: var(--accent);
+      }
+      .cmp-note {
+        padding: 14px 22px 18px;
+        border-top: 1px solid var(--line);
+        font-size: 11.5px;
+        line-height: 1.6;
+        color: var(--text-3);
+      }
+
+      /* ===== 反馈头像 / 社区 / 路线图 ===== */
+      .qa-av {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--av, var(--accent));
+        color: #10120a;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .qa-who {
+        flex: 1;
+        min-width: 0;
+        line-height: 1.45;
+      }
+      .qa-who b {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .qa-who span {
+        font-size: 12px;
+        color: var(--text-3);
+      }
+      .contrib {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .contrib .card .num {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+      }
+      .contrib .card h4 {
+        margin: 8px 0 6px;
+        font-size: 15px;
+      }
+      .contrib .card p {
+        font-size: 13.5px;
+      }
+      .sec-note {
+        margin-top: 18px;
+        padding: 4px 0 4px 16px;
+        border-left: 2px solid rgba(208, 69, 59, 0.7);
+        font-size: 13.5px;
+        color: var(--text-2);
+      }
+      .sec-note b {
+        color: var(--text);
+      }
+      .rm-h {
+        margin-top: 42px;
+        font-size: 13px;
+        font-family: var(--mono);
+        font-weight: 500;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-3);
+      }
+      .rm {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .rm-col {
+        padding: 20px 20px 18px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+      }
+      .rm-col h4 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-3);
+      }
+      .rm-col h4 i {
+        width: 6px;
+        height: 6px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--text-3);
+      }
+      .rm-col.now h4 i {
+        background: var(--accent);
+        box-shadow: 0 0 8px rgba(198, 242, 78, 0.7);
+      }
+      .rm-col ul {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+        list-style: none;
+      }
+      .rm-col li {
+        position: relative;
+        padding-left: 15px;
+        font-size: 13.5px;
+        color: var(--text-2);
+      }
+      .rm-col li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 9px;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.28);
+      }
+
+      /* ===== 页脚前的微信联系区 ===== */
+      .contact-wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: 44px;
+        align-items: center;
+      }
+      .contact-txt p {
+        margin-top: 14px;
+        max-width: 540px;
+        color: var(--text-2);
+      }
+      .contact-txt .contact-expire {
+        margin-top: 10px;
+        font-size: 12.5px;
+        color: var(--text-3);
+      }
+      .qr-card {
+        width: 100%;
+        margin: 0;
+        justify-self: end;
+      }
+      .qr-card img {
+        display: block;
+        width: 100%;
+        height: auto;
+        padding: 14px;
+        border: 1px solid var(--line-2);
+        border-radius: 16px;
+        background: #fff;
+      }
+      .qr-card figcaption {
+        margin-top: 12px;
+        text-align: center;
+        font-size: 12.5px;
+        color: var(--text-3);
+      }
+      .qr-card figcaption b {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      @media (max-width: 900px) {
+        .contact-wrap {
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+        .qr-card {
+          max-width: 300px;
+          justify-self: start;
+        }
+      }
+      @media (max-width: 900px) {
+        .arch-row {
+          grid-template-columns: 1fr;
+        }
+        .arch-k {
+          padding: 10px 18px;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .contrib,
+        .rm {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* ===== 灯箱 ===== */
+      .lb {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 34px;
+        background: rgba(6, 7, 5, 0.88);
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 0.18s ease,
+          visibility 0.18s;
+      }
+      .lb.open {
+        opacity: 1;
+        visibility: visible;
+      }
+      .lb-stage {
+        position: relative;
+        width: 100%;
+        max-width: 1180px;
+      }
+      .lb-figure {
+        margin: 0;
+        border: 1px solid var(--line-2);
+        border-radius: 14px;
+        overflow: hidden;
+        background: #ecebe6;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.62);
+      }
+      .lb-figure img {
+        display: block;
+        width: 100%;
+        max-height: 72vh;
+        object-fit: contain;
+        background: #ecebe6;
+      }
+      .lb-meta {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 14px;
+        color: var(--text-2);
+        font-size: 13.5px;
+      }
+      .lb-meta .txt {
+        flex: 1;
+        min-width: 0;
+      }
+      .lb-count {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.14em;
+        color: var(--text-3);
+        white-space: nowrap;
+      }
+      .lb-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        flex: none;
+        border-radius: 50%;
+        border: 1px solid var(--line-2);
+        background: rgba(18, 20, 16, 0.92);
+        color: var(--text);
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .lb-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .lb-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .lb-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
+        background: rgba(11, 12, 10, 0.82);
+        z-index: 2;
+      }
+      .lb-side {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+      }
+      .lb-side.prev {
+        left: -58px;
+      }
+      .lb-side.next {
+        right: -58px;
+      }
+      body.lb-open {
+        overflow: hidden;
+      }
+      @media (max-width: 1280px) {
+        .lb-side.prev {
+          left: 10px;
+        }
+        .lb-side.next {
+          right: 10px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      /* ===== 特性网格 ===== */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 24px 22px;
+        transition:
+          border-color 0.15s,
+          transform 0.15s;
+      }
+      .card:hover {
+        border-color: rgba(198, 242, 78, 0.45);
+        transform: translateY(-2px);
+      }
+      .card .ic {
+        font-size: 22px;
+        margin-bottom: 14px;
+      }
+      .card h3 {
+        font-size: 16.5px;
+        margin-bottom: 8px;
+      }
+      .card p {
+        font-size: 13.8px;
+        color: var(--text-2);
+      }
+      .card p code {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--accent);
+        background: rgba(198, 242, 78, 0.08);
+        border-radius: 5px;
+        padding: 1px 6px;
+      }
+
+      /* ===== 安全三原则 + 流程 ===== */
+      .secure-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+        margin-top: 8px;
+      }
+      .rule {
+        border-left: 2px solid var(--accent);
+        padding: 4px 0 4px 18px;
+      }
+      .rule h3 {
+        font-size: 15.5px;
+        margin-bottom: 6px;
+      }
+      .rule p {
+        font-size: 13.5px;
+        color: var(--text-2);
+      }
+      .flow {
+        margin-top: 36px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 22px 24px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        justify-content: center;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--text-2);
+      }
+      .flow .node {
+        border: 1px solid var(--line-2);
+        border-radius: 8px;
+        padding: 8px 14px;
+        background: var(--panel-2);
+      }
+      .flow .node.hl {
+        border-color: rgba(198, 242, 78, 0.5);
+        color: var(--accent);
+      }
+      .flow .arr {
+        color: var(--text-3);
+      }
+      .flow .block {
+        color: var(--danger);
+        border: 1px dashed rgba(208, 69, 59, 0.5);
+        border-radius: 8px;
+        padding: 8px 14px;
+      }
+
+      /* ===== 下载 ===== */
+      .dl {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(198, 242, 78, 0.06), rgba(198, 242, 78, 0) 55%), var(--panel);
+        padding: 46px 32px;
+        text-align: center;
+      }
+      .dl h2 {
+        font-size: clamp(22px, 3.4vw, 30px);
+        margin-bottom: 10px;
+      }
+      .dl p {
+        color: var(--text-2);
+        margin-bottom: 26px;
+      }
+      .dl .platforms {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--text-3);
+        letter-spacing: 0.1em;
+        margin-top: 16px;
+        text-transform: uppercase;
+      }
+
+      /* ===== 页脚 ===== */
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 30px 0 44px;
+      }
+      .foot {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        color: var(--text-3);
+        font-size: 12.5px;
+      }
+      .foot .sp {
+        flex: 1;
+      }
+      .foot a:hover {
+        color: var(--accent);
+      }
+
+      @media (max-width: 900px) {
+        .deck-stage {
+          --deck-w: 74%;
+        }
+        .deck-btn {
+          width: 38px;
+          height: 38px;
+        }
+      }
+      @media (max-width: 560px) {
+        .deck-stage {
+          --deck-w: 86%;
+        }
+        .deck-ui {
+          gap: 8px;
+        }
+        .deck-cap {
+          font-size: 13px;
+        }
+      }
+      @media (max-width: 640px) {
+        .hero {
+          padding: 64px 0 48px;
+        }
+        .nav-inner {
+          gap: 14px;
+        }
+        .brand span {
+          white-space: nowrap;
+        }
+        .brand small {
+          display: none;
+        }
+        .nav-links > a:not(.nav-cta) {
+          display: none;
+        }
+        section {
+          padding: 54px 0;
+        }
+      }
+      /* ===== 社区反馈 / 作者 / FAQ / Star ===== */
+      .quote-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+      .quote {
+        margin: 0;
+        padding: 22px 22px 18px;
+        border: 1px dashed var(--line-2);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .quote blockquote {
+        margin: 0;
+        font-size: 14.5px;
+        line-height: 1.65;
+        color: var(--text-2);
+      }
+      .quote blockquote::before {
+        content: '“';
+        color: var(--accent);
+        font-size: 22px;
+        line-height: 0;
+        vertical-align: -4px;
+        margin-right: 2px;
+      }
+      .quote figcaption {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: auto;
+        font-size: 12.5px;
+        color: var(--text-3);
+      }
+      .tag-demo {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--accent);
+        border: 1px solid rgba(198, 242, 78, 0.4);
+        border-radius: 999px;
+        padding: 2px 8px;
+      }
+      .author-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        margin-top: 22px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+      }
+      .author-card .avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        flex: none;
+        border: 1px solid var(--line-2);
+      }
+      .author-card h3 {
+        font-size: 19px;
+        margin: 6px 0 8px;
+      }
+      .author-card p {
+        color: var(--text-2);
+        font-size: 14.5px;
+        max-width: 640px;
+      }
+      .author-link {
+        display: inline-block;
+        margin-top: 12px;
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        border-bottom: 1px solid rgba(198, 242, 78, 0.35);
+      }
+      .faq {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 820px;
+      }
+      .qa {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 0 18px;
+      }
+      .qa summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 15px 0;
+        font-weight: 600;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .qa summary::-webkit-details-marker {
+        display: none;
+      }
+      .qa summary::after {
+        content: '+';
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 16px;
+      }
+      .qa[open] summary::after {
+        content: '−';
+      }
+      .qa p {
+        margin: 0 0 16px;
+        color: var(--text-2);
+        font-size: 14.5px;
+      }
+      .star-strip {
+        margin-top: 40px;
+        padding: 22px 24px;
+        border: 1px solid rgba(198, 242, 78, 0.28);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(198, 242, 78, 0.06), rgba(198, 242, 78, 0.02));
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+      .star-strip h3 {
+        font-size: 17px;
+      }
+      .star-strip p {
+        color: var(--text-2);
+        font-size: 14px;
+        flex: 1;
+        min-width: 220px;
+      }
+      @media (max-width: 900px) {
+        .quote-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="wrap nav-inner">
+        <a class="brand" href="#top" aria-label="FlintKeep">
+          <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+            <rect width="32" height="32" rx="8" fill="#c6f24e" />
+            <rect x="9" y="14" width="14" height="11" rx="2.6" fill="none" stroke="#10120a" stroke-width="2.4" />
+            <path
+              d="M12 14v-3.2a4 4 0 0 1 8 0V14"
+              fill="none"
+              stroke="#10120a"
+              stroke-width="2.4"
+              stroke-linecap="round"
+            />
+            <circle cx="16" cy="19" r="1.7" fill="#10120a" />
+            <path d="M16 20.4v2" stroke="#10120a" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <span data-i18n="brand">FlintKeep</span>
+          <small>VAULT</small>
+        </a>
+        <div class="nav-links">
+          <a href="#features" data-i18n="nav.features">Features</a>
+          <a href="#design" data-i18n="nav.design">Design</a>
+          <a href="#security" data-i18n="nav.security">Security</a>
+          <a href="#community" data-i18n="nav.community">Community</a>
+          <a href="#faq" data-i18n="nav.faq">FAQ</a>
+          <a href="#download" data-i18n="nav.download">Download</a>
+          <a class="nav-cta" href="https://github.com/yanyunai/flintkeep" target="_blank" rel="noreferrer"
+            >GitHub
+            <svg class="arr-ic" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path
+                d="M3.5 8.5 8.5 3.5M8.5 3.5H4.4M8.5 3.5v4.1"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </a>
+          <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-set-lang="en">EN</button>
+            <button type="button" data-set-lang="zh">中文</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero" id="top">
+      <div class="wrap">
+        <div class="kicker" data-i18n="hero.kicker">Local-first · AES-256-GCM · Open Source</div>
+        <h1 data-i18n-html="hero.h1">Lock your secrets back into <em>your own device</em></h1>
+        <p class="sub" data-i18n-html="hero.sub">
+          FlintKeep is a <b>local-first</b> vault for credentials and assets: servers, platform accounts, API keys and
+          project files — all encrypted on your own machine with <b>AES-256-GCM</b>. An AI assistant helps you use them,
+          but the data <b>never leaves the device</b>.
+        </p>
+        <div class="cta-row">
+          <a class="btn primary" href="#download" data-i18n="hero.cta1">Get started</a>
+          <a class="btn" href="#features" data-i18n="hero.cta2">See what it does</a>
+        </div>
+        <div class="chips">
+          <span class="chip"><i></i><span data-i18n="chip1">Data stays on-device</span></span>
+          <span class="chip"><i></i>AGPL-3.0</span>
+          <span class="chip"><i></i><span data-i18n="chip3">Native MCP integration</span></span>
+          <span class="chip"><i></i>macOS · Windows · Linux</span>
+        </div>
+        <div class="statusbar-wrap">
+          <div class="statusbar">
+            <span class="live"><i></i><span data-i18n="sb.unlocked">Unlocked</span></span>
+            <span>AES-256-GCM · <span data-i18n="sb.local">on-device</span></span>
+            <span class="sp"></span>
+            <span data-i18n="sb.cloud">Cloud copies: 0</span>
+            <span class="off" data-i18n="sb.off">Internet ✗ can't reach it</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section id="preview">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="kicker dim" data-i18n="pv.kicker">Product Tour</div>
+          <h2 data-i18n="pv.h2">Inside the vault</h2>
+          <p data-i18n="pv.sub">The real interface, running on demo data. Six of the everyday screens.</p>
+        </div>
+        <div class="deck" id="deck">
+          <div class="deck-stage" aria-roledescription="carousel" aria-label="Product screenshots">
+            <figure class="shot" data-key="ai">
+              <div class="frame" role="button" tabindex="0" aria-label="Enlarge screenshot: AI assistant">
+                <div class="bar">
+                  <span class="dot" style="background: #ff5f57"></span
+                  ><span class="dot" style="background: #febc2e"></span
+                  ><span class="dot" style="background: #28c840"></span
+                  ><span class="u">flintkeep.pages.dev / assistant</span>
+                </div>
+                <img data-shot="ai" src="assets/app-ai-zh.jpg" alt="AI assistant" decoding="async" />
+                <span class="zoom" aria-hidden="true">Click to zoom</span>
+              </div>
+              <figcaption class="sr-only" data-i18n-html="pv.c1"></figcaption>
+            </figure>
+            <figure class="shot" data-key="assets">
+              <div class="frame" role="button" tabindex="0" aria-label="Enlarge screenshot: Asset inventory">
+                <div class="bar">
+                  <span class="dot" style="background: #ff5f57"></span
+                  ><span class="dot" style="background: #febc2e"></span
+                  ><span class="dot" style="background: #28c840"></span
+                  ><span class="u">flintkeep.pages.dev / inventory</span>
+                </div>
+                <img data-shot="assets" src="assets/app-assets-zh.jpg" alt="Asset inventory" decoding="async" />
+                <span class="zoom" aria-hidden="true">Click to zoom</span>
+              </div>
+              <figcaption class="sr-only" data-i18n-html="pv.c2"></figcaption>
+            </figure>
+            <figure class="shot" data-key="studio">
+              <div class="frame" role="button" tabindex="0" aria-label="Enlarge screenshot: Server room NOC">
+                <div class="bar">
+                  <span class="dot" style="background: #ff5f57"></span
+                  ><span class="dot" style="background: #febc2e"></span
+                  ><span class="dot" style="background: #28c840"></span><span class="u">flintkeep.pages.dev / noc</span>
+                </div>
+                <img data-shot="studio" src="assets/app-studio-zh.jpg" alt="Server room NOC" decoding="async" />
+                <span class="zoom" aria-hidden="true">Click to zoom</span>
+              </div>
+              <figcaption class="sr-only" data-i18n-html="pv.c3"></figcaption>
+            </figure>
+            <figure class="shot" data-key="audit">
+              <div class="frame" role="button" tabindex="0" aria-label="Enlarge screenshot: Audit log">
+                <div class="bar">
+                  <span class="dot" style="background: #ff5f57"></span
+                  ><span class="dot" style="background: #febc2e"></span
+                  ><span class="dot" style="background: #28c840"></span
+                  ><span class="u">flintkeep.pages.dev / audit</span>
+                </div>
+                <img data-shot="audit" src="assets/app-audit-zh.jpg" alt="Audit log" decoding="async" />
+                <span class="zoom" aria-hidden="true">Click to zoom</span>
+              </div>
+              <figcaption class="sr-only" data-i18n-html="pv.c4"></figcaption>
+            </figure>
+            <figure class="shot" data-key="runner">
+              <div class="frame" role="button" tabindex="0" aria-label="Enlarge screenshot: Run workbench">
+                <div class="bar">
+                  <span class="dot" style="background: #ff5f57"></span
+                  ><span class="dot" style="background: #febc2e"></span
+                  ><span class="dot" style="background: #28c840"></span
+                  ><span class="u">flintkeep.pages.dev / runner</span>
+                </div>
+                <img data-shot="runner" src="assets/app-runner-zh.jpg" alt="Run workbench" decoding="async" />
+                <span class="zoom" aria-hidden="true">Click to zoom</span>
+              </div>
+              <figcaption class="sr-only" data-i18n-html="pv.c5"></figcaption>
+            </figure>
+            <figure class="shot" data-key="mcp">
+              <div class="frame" role="button" tabindex="0" aria-label="Enlarge screenshot: MCP access">
+                <div class="bar">
+                  <span class="dot" style="background: #ff5f57"></span
+                  ><span class="dot" style="background: #febc2e"></span
+                  ><span class="dot" style="background: #28c840"></span><span class="u">flintkeep.pages.dev / mcp</span>
+                </div>
+                <img data-shot="mcp" src="assets/app-mcp-zh.jpg" alt="MCP access" decoding="async" />
+                <span class="zoom" aria-hidden="true">Click to zoom</span>
+              </div>
+              <figcaption class="sr-only" data-i18n-html="pv.c6"></figcaption>
+            </figure>
+          </div>
+          <div class="deck-ui">
+            <button type="button" class="deck-btn deck-prev" aria-label="Previous screenshot">
+              <svg viewBox="0 0 12 12" width="14" height="14" fill="none" aria-hidden="true">
+                <path
+                  d="M7.5 2.5L4 6l3.5 3.5"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <div class="deck-mid">
+              <p class="deck-cap">
+                <span class="deck-idx" data-deck-idx>01 / 06</span>
+                <span data-deck-cap aria-live="polite"></span>
+              </p>
+              <div class="deck-dots" role="tablist" aria-label="Screenshots"></div>
+              <div class="deck-prog" aria-hidden="true"><i></i></div>
+            </div>
+            <button type="button" class="deck-btn deck-next" aria-label="Next screenshot">
+              <svg viewBox="0 0 12 12" width="14" height="14" fill="none" aria-hidden="true">
+                <path
+                  d="M4.5 2.5L8 6l-3.5 3.5"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+          <p class="shot-hint">
+            <span data-i18n="pv.hint">Click the centre shot to enlarge · ← → to browse</span>
+            <span class="hint-hover" data-i18n="pv.hint2"> · hover to pause autoplay</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="kicker dim" data-i18n="ft.kicker">Features</div>
+          <h2 data-i18n="ft.h2">More than a password manager</h2>
+          <p data-i18n="ft.sub">
+            Credentials, assets, project files, an AI assistant and a run workbench — one vault for all of it, entirely
+            on your device.
+          </p>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <div class="ic">🔐</div>
+            <h3 data-i18n="f1.t">Encrypted on-device</h3>
+            <p data-i18n-html="f1.p">
+              The whole vault is written to your local disk as <code>AES-256-GCM</code> ciphertext. Locked, it's
+              unreadable; lose a backup file and whoever finds it gets ciphertext, nothing else.
+            </p>
+          </div>
+          <div class="card">
+            <div class="ic">🤖</div>
+            <h3 data-i18n="f2.t">A vault that talks</h3>
+            <p data-i18n-html="f2.p">
+              A built-in AI assistant speaks <code>MCP</code>: ask for "the login key of server #7" and it's on your
+              screen. Agents can register assets, check ports and run inspections.
+            </p>
+          </div>
+          <div class="card">
+            <div class="ic">⚡</div>
+            <h3 data-i18n="f3.t">Run workbench</h3>
+            <p data-i18n="f3.p">
+              Register how each local project starts, its dependencies and ports. One click to start and stop —
+              dependencies are torn down with it, containers leave nothing behind.
+            </p>
+          </div>
+          <div class="card">
+            <div class="ic">📜</div>
+            <h3 data-i18n="f4.t">Full audit trail</h3>
+            <p data-i18n="f4.p">
+              Who touched which asset and when, every agent operation — the audit log keeps it all. Sensitive fields
+              reveal on demand and hide again.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="security">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="kicker dim" data-i18n="sc.kicker">Security</div>
+          <h2 data-i18n="sc.h2">Security is the architecture, not a slogan</h2>
+          <p data-i18n="sc.sub">Three principles baked into the design — not just written in the PR copy.</p>
+        </div>
+        <div class="secure-grid">
+          <div class="rule">
+            <h3 data-i18n="r1.t">Keys never touch the cloud</h3>
+            <p data-i18n="r1.p">
+              Encryption and decryption happen on your device. There is no "cloud sync copy" and no server that could
+              see your plaintext — because your data simply isn't there.
+            </p>
+          </div>
+          <div class="rule">
+            <h3 data-i18n="r2.t">Open source, auditable</h3>
+            <p data-i18n="r2.p">
+              AGPL-3.0, fully public code. Don't take our word for it — build it yourself, or just read the source.
+            </p>
+          </div>
+          <div class="rule">
+            <h3 data-i18n="r3.t">Least privilege</h3>
+            <p data-i18n="r3.p">
+              Agents access through allowlists, sensitive fields reveal on demand and re-hide afterwards, and every step
+              lands in the audit log.
+            </p>
+          </div>
+        </div>
+        <div class="flow">
+          <span class="node" data-i18n="fl.n1">Your device · plaintext</span>
+          <span class="arr">→</span>
+          <span class="node hl">AES-256-GCM</span>
+          <span class="arr">→</span>
+          <span class="node" data-i18n="fl.n2">Ciphertext on local disk</span>
+          <span class="arr" data-i18n="fl.mid">← AI assistant · local MCP →</span>
+          <span class="block" data-i18n="fl.block">Internet ✗</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="design">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="kicker dim" data-i18n="ds.kicker">Design</div>
+          <h2 data-i18n="ds.h2">How it is put together</h2>
+          <p data-i18n="ds.sub">
+            One encrypted core, three ways in: the desktop UI, the MCP server your agent talks to, and a local proxy
+            that injects the real secret. Nothing above the core ever holds a plaintext key.
+          </p>
+        </div>
+
+        <div class="arch">
+          <div class="arch-row">
+            <div class="arch-k" data-i18n="ds.r1k">Surface</div>
+            <div class="arch-v">
+              <span class="n">Desktop UI · Vue 3 + Vite</span>
+              <span class="n">CLI · npm run fk</span>
+              <span class="n">Electron shell</span>
+            </div>
+          </div>
+          <div class="arch-row">
+            <div class="arch-k" data-i18n="ds.r2k">Interfaces</div>
+            <div class="arch-v">
+              <span class="n hl">MCP stdio · agent access</span>
+              <span class="n hl">Model B HTTP proxy · header / Basic / SigV4</span>
+              <span class="n hl">SSH bastion · ssh -p 8789 token@127.0.0.1</span>
+            </div>
+          </div>
+          <div class="arch-row">
+            <div class="arch-k" data-i18n="ds.r3k">Core</div>
+            <div class="arch-v">
+              <span class="n">src/core · vault · schema · proxy · sshproxy · mcp · whitelist · ai-usage</span>
+            </div>
+          </div>
+          <div class="arch-row">
+            <div class="arch-k" data-i18n="ds.r4k">Storage</div>
+            <div class="arch-v">
+              <span class="n hl">AES-256-GCM ciphertext on local disk</span>
+              <span class="n">keystore.json · salt + verifier only</span>
+              <span class="n">PBKDF2 · 210 000 iterations</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="secure-grid tight">
+          <div class="rule">
+            <h3 data-i18n="ds.d1t">One core, three doors</h3>
+            <p data-i18n="ds.d1p">
+              The UI, the CLI and the MCP server all call src/core. Fix a rule once — allowlists, redaction, audit — and
+              it applies everywhere. There is no second implementation to drift.
+            </p>
+          </div>
+          <div class="rule">
+            <h3 data-i18n="ds.d2t">The agent gets a token, not a key</h3>
+            <p data-i18n="ds.d2p">
+              Model B hands the agent a short-lived token plus a local proxy address. The real credential is injected
+              server-side and the token dies after use. HTTP, cloud signing and SSH follow the same rule.
+            </p>
+          </div>
+          <div class="rule">
+            <h3 data-i18n="ds.d3t">Keys live in memory only</h3>
+            <p data-i18n="ds.d3p">
+              The master key is derived from your passphrase with PBKDF2 (210k rounds); the keystore keeps only salt and
+              a verifier. Lock the app and decryption stops — plaintext never reaches the disk.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack">
+          <span class="stack-k" data-i18n="ds.stack">Stack</span>
+          <span class="chip">Electron</span>
+          <span class="chip">Vue 3</span>
+          <span class="chip">Vite</span>
+          <span class="chip">TypeScript</span>
+          <span class="chip">Node http</span>
+          <span class="chip">MCP stdio · no SDK</span>
+          <span class="chip">AES-256-GCM</span>
+          <span class="chip">PBKDF2</span>
+        </div>
+
+        <div class="cmp">
+          <div class="cmp-head">
+            <h3 data-i18n="ds.cmpH">Why not just a password manager?</h3>
+          </div>
+          <div class="cmp-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col"></th>
+                  <th scope="col">FlintKeep</th>
+                  <th scope="col">1Password / Bitwarden</th>
+                  <th scope="col">Infisical / Vault</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row" data-i18n="ds.c1">Encrypted vault stays on your device</th>
+                  <td class="me">✓</td>
+                  <td data-i18n="ds.c1a">cloud sync</td>
+                  <td data-i18n="ds.c1b">server-side</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="ds.c2">Agent fetches credentials over MCP</th>
+                  <td class="me">✓</td>
+                  <td data-i18n="ds.c2a">no</td>
+                  <td data-i18n="ds.c2b">CLI / SDK</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="ds.c3">Real secret never enters agent context</th>
+                  <td class="me">✓</td>
+                  <td data-i18n="ds.c3a">no</td>
+                  <td data-i18n="ds.c3b">partial</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="ds.c4">Cloud request signing (SigV4 / Aliyun / Tencent)</th>
+                  <td class="me">✓</td>
+                  <td data-i18n="ds.c4a">no</td>
+                  <td data-i18n="ds.c4b">no</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-i18n="ds.c5">Local SSH bastion with token login</th>
+                  <td class="me">✓</td>
+                  <td data-i18n="ds.c5a">no</td>
+                  <td data-i18n="ds.c5b">no</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="cmp-note" data-i18n="ds.note">
+            1Password™ is a trademark of AgileBits Inc.; Bitwarden, Infisical and HashiCorp Vault belong to their
+            respective owners. FlintKeep is not affiliated with them — this table only compares features.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="voices">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="kicker dim" data-i18n="vs.kicker">Voices</div>
+          <h2 data-i18n="vs.h2">What people say</h2>
+          <p data-i18n="vs.sub">Layout placeholders — replace with real quotes before launch.</p>
+        </div>
+        <div class="quote-grid">
+          <figure class="quote">
+            <blockquote data-i18n="vs.q1"></blockquote>
+            <figcaption>
+              <span class="qa-av" style="--av: #c6f24e" data-i18n="vs.av1">Z</span>
+              <span class="qa-who">
+                <b data-i18n="vs.n1"></b>
+                <span data-i18n="vs.a1"></span>
+              </span>
+              <span class="tag-demo" data-i18n="vs.tag">SAMPLE</span>
+            </figcaption>
+          </figure>
+          <figure class="quote">
+            <blockquote data-i18n="vs.q2"></blockquote>
+            <figcaption>
+              <span class="qa-av" style="--av: #e8c07a" data-i18n="vs.av2">L</span>
+              <span class="qa-who">
+                <b data-i18n="vs.n2"></b>
+                <span data-i18n="vs.a2"></span>
+              </span>
+              <span class="tag-demo" data-i18n="vs.tag">SAMPLE</span>
+            </figcaption>
+          </figure>
+          <figure class="quote">
+            <blockquote data-i18n="vs.q3"></blockquote>
+            <figcaption>
+              <span class="qa-av" style="--av: #8fb6e0" data-i18n="vs.av3">周</span>
+              <span class="qa-who">
+                <b data-i18n="vs.n3"></b>
+                <span data-i18n="vs.a3"></span>
+              </span>
+              <span class="tag-demo" data-i18n="vs.tag">SAMPLE</span>
+            </figcaption>
+          </figure>
+        </div>
+
+        <div class="author-card" id="author">
+          <img
+            class="avatar"
+            src="data:image/jpeg;base64,/9j/2wCEAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDIBCQkJDAsMGA0NGDIhHCEyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMv/AABEIAKAAoAMBIgACEQEDEQH/xAGiAAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgsQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+gEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEQACAQIEBAMEBwUEBAABAncAAQIDEQQFITEGEkFRB2FxEyIygQgUQpGhscEJIzNS8BVictEKFiQ04SXxFxgZGiYnKCkqNTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqCg4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2dri4+Tl5ufo6ery8/T19vf4+fr/2gAMAwEAAhEDEQA/APG+9FLRQIKKKKQBQKKKAFopKWgBe1GKRmVRycVAs7SSbUUY9SQB+tAE5pKlF3bQFlmhD44yG7+nFRTXtiy7kV0yfu5zQAlJQskbjKOrcZwOopaAGGkpxppoAaabTjTaAENMNPNM70AXaKWkFAC0UUUAFIKWkoAWikqzYW5u76GAAku4GBQBnXZJXaMeuarRxvOwjjBbHPSun1vR5YmAAYsf5elXdF0cQW+Snzt1JrOU+VXNIQcnY4/7MUyJBtwO9RFFfPGK9Dn8MpeA5XB9RWXceDriJCYfmA9RUqqmXKjJHFujRHIJH0q7bXPm/KwwwHX1qe60m7gVvMgkAHcrWbGCkq8EEHFap3MmmjSpDRSUyRp6U004000ANNNPU049aaaAL1JS0UAFFJRQAUUU3NADq6LQbGONra881/PbcUiCcFeV6565ycY6DrXN13vhC0k1CHTFhjdmScozqMgfNnB9PvD86yqycUmjpw1OE5NS7HocHgu31Gziu7okM3CL7eprmNffS/D1wLX53bqSg4FejeImlttIEdq20qgQMO1ePayl9FHFJAsM07Od4cFmIyO5IHepqNPQKaaVzX0vUbG+JWCZSe69xWwkK+ma4uBJRfq62+xw21tv3T7g1v3GoTWgCKoMpGQprBrWx0ra5qz2UTxkNGp+orxnxBarbeIrqKIfJvyPavSv7e1CPat3YhUcgB0bIrzbUnM2rXkrHJMzY+gOK3pLU567TRVpKU0hrc5Rppp6UtJQA000040w9aAL9JmkzRmgBaKQmrM9r9hRXvi0e8ZWMD5j/hQBXALHABJJ4AqyumXjjIgYDrl8KP1qhPqjkbLVPs8fscs31NQ3WpXNygWSQhB/COlMCzPLBbHDTLI/dYuR+fT8s12vwx8QCXXrHR/s5VTcNOrg5x8nOf8AvkfnXmZHNb3gq9Gn+M9KnJwouFQn2b5f61MkmtS4ScXdH0b4kuD9gkUHtXHR+XNFlwpA9a6DXpt9q/P8NcfbXUO0xOw3NwBmuSbuztpaLUtWvl3V6gjX5VPXFO17Q49VjYZcN0+VsGsq107VLa4aayvN64wEkHA/EV0EU08Kq11s8wqN+zpn2qdtTR2loZcOlx6VYvcSyOIYo8+WxzggdfxryuWQyyu56sc13njXxCi2n9nRuPMlwWHov/18VwGa6KSe7OKu1flQnekoNNJrYwCmk0E0hoAQmmmlNJQBbzS5phoGc470Aa2lRmKObUPK8zyOIwRkFvX3xWNqd1JdyrNK5ZiTnP1zXam1Wy8NtCCBIq7yT3fqfy6fhXn7y+YH3/eJyPrTAbTCaUHjNI3NAxp61b0lgmtWLZxi4jP/AI8Kq9RT7eTyrqKT+44b8jQB7zcX3mRTWMj/AL+IcZ6svY/0rlLqxW7gx5AaRCcetaHjaJGe01CwnHnooSYIeV9Cf1H41ytvrF/bMd3zg1yzjZ6HXTnpqbOnWdxGMW89xZMpz8zblJ+h6/nVrUdfXTtP33koklHAC8Fz7Cn+H7mfxHeCxSMpjHmSDnaP8a4Pxp5cfi3UreFmMNvMYUDNnG3g/qDRGm5b7DqVktjHvb2XUL2S5nOXc5+g7CmxzNGQDytQd+Kf1WupKxxvUuhwwyDSE1VVinIqxnIBpCA0ZpKSgBSaaaKSgCzmtDQ7f7RqaMfuRfvGz7dP1xWZmtnR5kt7eQn70obJ9AMf4mmgJvEGqMLQRIcFjiuTJzmrmoXHnt833lYgiqIPY0DFHFLTCcCnjpQA0cZpD60veigD3l9MM+nW12yDE8CmRR0II5riH0+W8vvsdsh35IJx0Hqa9dsbZX0G0jbgiBBz/uiquk6BHppnuCA888rOxx0BJwB9P8aidPmaZdOpyJo5Ga1i8G2unsLz7MWlLTSbsE4Vj+POBjvmvI9TvDqGq3l7g/6RO8vP+0xP9a9I+Mt8v2nTNOX7yK8z/jgL/Jq8sHSrsloiLt6sQ9aevSmGlzgUAPJ5Aqwv3BVUc1Oh+QUAPpKSjNIQd6CaQmkoGS7qutut7SCUnhgysPQHp/KqggI+8fm/uirl8GERgUbiFXjPPAxQmIxpGLOcnPvSDn60pUg4ZSCPWkx7UxjTwcU7NMP3jSg0AO/iqxZQG5v7e3UZaWVUA9ycVXHWt/wTALnxnpaEZCzbz9FBb+lAH0TB1htlHyogLfh2qVWK3MinO09OelMsFLGSQ/xHFQvMI5HdjwATWliDwj4lXv2zxveYbKwqkQ/AZP6k1yVWtUuzf6rd3bHJnmeT8yTVSsy0J3ozQaSgBwNTocrVcCpYzwaAJM0ZpuaKQC5ozSUlAFuyJlu417FuaZqUwlu246EjNJaSGGTzgAdgzz/n3qOefzWZvs6oW5zzmhAQYz3oo4pecUwI+9GaMUooAAa7n4XWnn+Ip7nGfs9uSPqxA/lurhh1r1z4Waf5WiXV5wJLmURr/ujgfqTTW4nseoWxMVrGScDG7IHrXN+NL37D4e1KUNtbyGCH3PA/nXRzbfK2AhccDNeb/FS8x4fiiLYeSUKR645q3sSeO0meaKbWZYpNHNJS0AKKkTjNRcVIpoAfRSUUgFopM0ZoAtNbiKyWV3I3HkDr7CqTuXbJ/CrV1lryaEZKo7bQT74FVWwDgc46mmgDoKCTjGKM96Udc0AMPBpM05k70lACxo0jrGilnY4AHUmvoPQNFTRrGwtozgqgD88FgpJP515V8O9FOo6/HeSj/R7Qh8kfefsPw6/hXuCsplhJOV3Y/Q1cURJ9CO4sWkG6SVxx0XgV4v8AEeLyNaRRKzrt4Vmzivab66VGOTnj1rwrx7dfafEsnOQigU5bBHc5fNJRUkLFZlIGecYrMsYRg0U5xg47jim0ALnHXmnKRTaPrQBJmikpM0gHUU3NFAFu9kaK6JABDopII9RVPBwDggHpWlJb/ary2RvulfmI9ATXQXemx3Ol+QiqrKMx9sGiOqKqaSONpRwKfPbzWz7Joyje/eo6ZI8Y6nvSBQQc03NOB4wKAO80PxXp+kWMdvGgjQc9eSe5NdFF43WWIeXPAI25yxG5f1ryHGaaVIquYjkPT9R8bW3lsEmUn/eBP6V5tf3TXt7LcMSS5quBmt7w/Y2800iahayGKRMI+CNp9QfWpnPTUuELuyMHFAyCD6V0N34Rv4CTbbLlO21sNj6GsSe3mtpPLnieN/7rrg1KknsVKEo7oZI4d2bGMnNNxS7TS1RImKCOKKM0ALSZozRSAM0tJRQB/9k="
+            alt="FlintKeep maintainer"
+            width="72"
+            height="72"
+            loading="lazy"
+          />
+          <div>
+            <div class="kicker dim" data-i18n="au.kicker">Maintainer</div>
+            <h3 data-i18n="au.name"></h3>
+            <p data-i18n="au.note"></p>
+            <a class="author-link" href="https://github.com/yanyunai" target="_blank" rel="noreferrer"
+              >GitHub @yanyunai ↗</a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="community">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="kicker dim" data-i18n="cm.kicker">Community</div>
+          <h2 data-i18n="cm.h2">Maintainer &amp; community</h2>
+          <p data-i18n="cm.sub">
+            FlintKeep is an AGPL-3.0 open-source project. Issues, patches and translations are all welcome.
+          </p>
+        </div>
+
+        <div class="contrib">
+          <div class="card">
+            <div class="num" data-i18n="cm.c1">01 · REPORT</div>
+            <h4 data-i18n="cm.c1t">Open an issue</h4>
+            <p data-i18n="cm.c1p">
+              Tell us what the vault should do that it does not, or what broke. Repro steps beat screenshots.
+            </p>
+            <a class="author-link" href="https://github.com/yanyunai/flintkeep/issues" target="_blank" rel="noreferrer"
+              >GitHub Issues ↗</a
+            >
+          </div>
+          <div class="card">
+            <div class="num" data-i18n="cm.c2">02 · CONTRIBUTE</div>
+            <h4 data-i18n="cm.c2t">Docs, translations, adapters</h4>
+            <p data-i18n="cm.c2p">
+              The i18n files, this landing page and the injection adapters are the easiest places to start.
+            </p>
+          </div>
+          <div class="card">
+            <div class="num" data-i18n="cm.c3">03 · DISCLOSE</div>
+            <h4 data-i18n="cm.c3t">Security first</h4>
+            <p data-i18n="cm.c3p">
+              Found a hole? Ping the maintainer privately first — do not paste exploit details into a public issue.
+            </p>
+          </div>
+        </div>
+
+        <p class="sec-note" data-i18n-html="cm.note">
+          <b>License:</b> AGPL-3.0-only. Fork it, run it, change it; if you offer a modified version as a service,
+          publish your changes. The name and logo are not covered by the license.
+        </p>
+
+        <h3 class="rm-h" data-i18n="cm.rm">Roadmap</h3>
+        <div class="rm">
+          <div class="rm-col">
+            <h4><i></i><span data-i18n="cm.r1">Shipped</span></h4>
+            <ul>
+              <li data-i18n="cm.s1">Encrypted core, audit chain, rotation reminders</li>
+              <li data-i18n="cm.s2">MCP access, HTTP proxy injection, SSH bastion</li>
+              <li data-i18n="cm.s3">Aliyun / Tencent IP allowlist auto-update</li>
+              <li data-i18n="cm.s4">Tray app, auto-lock, encrypted backups</li>
+            </ul>
+          </div>
+          <div class="rm-col now">
+            <h4><i></i><span data-i18n="cm.r2">Next</span></h4>
+            <ul>
+              <li data-i18n="cm.n1">Signed builds and auto-update</li>
+              <li data-i18n="cm.n2">Audit log export</li>
+              <li data-i18n="cm.n3">UI localisation (zh / en)</li>
+            </ul>
+          </div>
+          <div class="rm-col">
+            <h4><i></i><span data-i18n="cm.r3">Wanted</span></h4>
+            <ul>
+              <li data-i18n="cm.w1">Team vault (self-hosted, local)</li>
+              <li data-i18n="cm.w2">Read-only mobile view</li>
+              <li data-i18n="cm.w3">More injection adapters (K8s, databases)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="wrap">
+        <div class="sec-head">
+          <div class="kicker dim" data-i18n="fq.kicker">FAQ</div>
+          <h2 data-i18n="fq.h2">Straight answers</h2>
+        </div>
+        <div class="faq">
+          <details class="qa" open>
+            <summary data-i18n="fq.q1"></summary>
+            <p data-i18n="fq.a1"></p>
+          </details>
+          <details class="qa">
+            <summary data-i18n="fq.q2"></summary>
+            <p data-i18n="fq.a2"></p>
+          </details>
+          <details class="qa">
+            <summary data-i18n="fq.q3"></summary>
+            <p data-i18n="fq.a3"></p>
+          </details>
+          <details class="qa">
+            <summary data-i18n="fq.q4"></summary>
+            <p data-i18n="fq.a4"></p>
+          </details>
+        </div>
+        <div class="star-strip">
+          <h3 data-i18n="st.h2">Star it if it helps</h3>
+          <p data-i18n="st.p"></p>
+          <a
+            class="btn primary"
+            href="https://github.com/yanyunai/flintkeep"
+            target="_blank"
+            rel="noreferrer"
+            data-i18n="st.cta"
+            >Open GitHub</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <section id="download">
+      <div class="wrap">
+        <div class="dl">
+          <div class="kicker" data-i18n="dl.kicker">Get Started</div>
+          <h2 data-i18n="dl.h2">Bring the vault back home</h2>
+          <p data-i18n="dl.p">
+            Free and open source. Grab an installer from GitHub Releases — or build it yourself from the source.
+          </p>
+          <div class="cta-row">
+            <a
+              class="btn primary"
+              href="https://github.com/yanyunai/flintkeep/releases"
+              target="_blank"
+              rel="noreferrer"
+              data-i18n="dl.cta1"
+              >Download installer</a
+            >
+            <a class="btn" href="https://github.com/yanyunai/flintkeep" target="_blank" rel="noreferrer"
+              >GitHub
+              <svg class="arr-ic" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path
+                  d="M3.5 8.5 8.5 3.5M8.5 3.5H4.4M8.5 3.5v4.1"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </a>
+          </div>
+          <div class="platforms">macOS · Windows · Linux</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="wrap contact-wrap">
+        <div class="contact-txt">
+          <div class="kicker" data-i18n="ct.kicker">Contact</div>
+          <h2 data-i18n="ct.h2">Something not working? Ping me</h2>
+          <p data-i18n="ct.p">
+            Usage questions, feature requests, a bug you want fixed — scan the code and say hi. If you found a
+            vulnerability, tell me privately first.
+          </p>
+          <p class="contact-expire" data-i18n="ct.expire">
+            Personal QR codes expire — if this one has, open an issue on GitHub instead.
+          </p>
+        </div>
+        <figure class="qr-card">
+          <img
+            src="assets/wechat-qr.png"
+            width="520"
+            height="520"
+            alt="WeChat contact QR code"
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>
+            <b data-i18n="ct.who">WeChat · 李先生</b>
+            <span data-i18n="ct.scan">Scan to add · mention “FlintKeep”</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap foot">
+        <span data-i18n="brand2">FlintKeep</span>
+        <span>AGPL-3.0</span>
+        <span>© 2026</span>
+        <span class="sp"></span>
+        <a href="#community" data-i18n="foot.contrib">Contribute</a>
+        <a href="https://github.com/yanyunai/flintkeep/issues" target="_blank" rel="noreferrer" data-i18n="foot.issues"
+          >Issues</a
+        >
+        <a href="https://github.com/yanyunai/flintkeep" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="#top" data-i18n="foot.top">Back to top ↑</a>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        var I18N = {
+          en: {
+            title: 'FlintKeep — The encrypted vault that never leaves your device',
+            brand: 'FlintKeep',
+            brand2: 'FlintKeep',
+            'nav.features': 'Features',
+            'nav.security': 'Security',
+            'nav.download': 'Download',
+            'hero.kicker': 'Local-first · AES-256-GCM · Open Source',
+            'hero.h1': 'Lock your secrets back into <em>your own device</em>',
+            'hero.sub':
+              'FlintKeep is a <b>local-first</b> vault for credentials and assets: servers, platform accounts, API keys and project files — all encrypted on your own machine with <b>AES-256-GCM</b>. An AI assistant helps you use them, but the data <b>never leaves the device</b>.',
+            'hero.cta1': 'Get started',
+            'hero.cta2': 'See what it does',
+            chip1: 'Data stays on-device',
+            chip3: 'Native MCP integration',
+            'sb.unlocked': 'Unlocked',
+            'sb.local': 'on-device',
+            'sb.cloud': 'Cloud copies: 0',
+            'sb.off': "Internet ✗ can't reach it",
+            'pv.h2': 'Inside the vault',
+            'pv.sub': 'The real interface, running on demo data. Six of the everyday screens.',
+            'pv.c1': '<b>AI assistant</b> — run your vault by talking to it',
+            'pv.c2': '<b>Asset inventory</b> — servers, accounts and keys on one screen',
+            'pv.c3': '<b>Server room</b> — a live NOC board for your fleet',
+            'pv.c4': '<b>Audit log</b> — every move is on the record',
+            'pv.c5': '<b>Run workbench</b> — project and its dependencies start and stop together',
+            'pv.c6': '<b>MCP access</b> — wire your own agent to the vault in minutes',
+            'pv.hint': 'Click the centre shot to enlarge · ← → to browse',
+            'pv.hint2': ' · hover to pause autoplay',
+            'nav.design': 'Design',
+            'nav.community': 'Community',
+            'nav.faq': 'FAQ',
+            'foot.contrib': 'Contribute',
+            'foot.issues': 'Issues',
+            'vs.kicker': 'Voices',
+            'vs.h2': 'What people say',
+            'vs.sub':
+              'Sample feedback — demo personas written for this page. Replace them with real quotes before launch.',
+            'vs.tag': 'SAMPLE',
+            'vs.q1': 'I stopped pasting SSH keys into chat windows. The agent asks the vault, not me.',
+            'vs.n1': 'Zhe · indie developer',
+            'vs.a1': 'Servers and API keys for four side projects',
+            'vs.av1': 'Z',
+            'vs.q2': 'Every server and key in one place, and the audit log tells me what my agent actually touched.',
+            'vs.n2': 'Lena · platform engineer',
+            'vs.a2': 'Runs a 30-node fleet for an e-commerce team',
+            'vs.av2': 'L',
+            'vs.q3': 'Wiring MCP took about three minutes. My agent just has the keys it needs, nothing more.',
+            'vs.n3': 'Zhou · ops lead',
+            'vs.a3': 'Keeps the on-call rotation sane',
+            'vs.av3': 'Z',
+            'pv.kicker': 'Product Tour',
+            'ft.kicker': 'Features',
+            'sc.kicker': 'Security',
+            'dl.kicker': 'Get Started',
+            'ds.kicker': 'Design',
+            'ds.h2': 'How it is put together',
+            'ds.sub':
+              'One encrypted core, three ways in: the desktop UI, the MCP server your agent talks to, and a local proxy that injects the real secret. Nothing above the core ever holds a plaintext key.',
+            'ds.r1k': 'Surface',
+            'ds.r2k': 'Interfaces',
+            'ds.r3k': 'Core',
+            'ds.r4k': 'Storage',
+            'ds.d1t': 'One core, three doors',
+            'ds.d1p':
+              'The UI, the CLI and the MCP server all call src/core. Fix a rule once — allowlists, redaction, audit — and it applies everywhere. There is no second implementation to drift.',
+            'ds.d2t': 'The agent gets a token, not a key',
+            'ds.d2p':
+              'Model B hands the agent a short-lived token plus a local proxy address. The real credential is injected server-side and the token dies after use. HTTP, cloud signing and SSH follow the same rule.',
+            'ds.d3t': 'Keys live in memory only',
+            'ds.d3p':
+              'The master key is derived from your passphrase with PBKDF2 (210k rounds); the keystore keeps only salt and a verifier. Lock the app and decryption stops — plaintext never reaches the disk.',
+            'ds.stack': 'Stack',
+            'ds.cmpH': 'Why not just a password manager?',
+            'ds.c1': 'Encrypted vault stays on your device',
+            'ds.c1a': 'cloud sync',
+            'ds.c1b': 'server-side',
+            'ds.c2': 'Agent fetches credentials over MCP',
+            'ds.c2a': 'no',
+            'ds.c2b': 'CLI / SDK',
+            'ds.c3': 'Real secret never enters agent context',
+            'ds.c3a': 'no',
+            'ds.c3b': 'partial',
+            'ds.c4': 'Cloud request signing (SigV4 / Aliyun / Tencent)',
+            'ds.c4a': 'no',
+            'ds.c4b': 'no',
+            'ds.c5': 'Local SSH bastion with token login',
+            'ds.c5a': 'no',
+            'ds.c5b': 'no',
+            'ds.note':
+              '1Password™ is a trademark of AgileBits Inc.; Bitwarden, Infisical and HashiCorp Vault belong to their respective owners. FlintKeep is not affiliated with them — this table only compares features.',
+            'cm.kicker': 'Community',
+            'cm.h2': 'Maintainer & community',
+            'cm.sub': 'FlintKeep is an AGPL-3.0 open-source project. Issues, patches and translations are all welcome.',
+            'cm.c1': '01 · REPORT',
+            'cm.c1t': 'Open an issue',
+            'cm.c1p': 'Tell us what the vault should do that it does not, or what broke. Repro steps beat screenshots.',
+            'cm.c2': '02 · CONTRIBUTE',
+            'cm.c2t': 'Docs, translations, adapters',
+            'cm.c2p': 'The i18n files, this landing page and the injection adapters are the easiest places to start.',
+            'cm.c3': '03 · DISCLOSE',
+            'cm.c3t': 'Security first',
+            'cm.c3p':
+              'Found a hole? Ping the maintainer privately first — do not paste exploit details into a public issue.',
+            'cm.note':
+              '<b>License:</b> AGPL-3.0-only. Fork it, run it, change it; if you offer a modified version as a service, publish your changes. The name and logo are not covered by the license.',
+            'cm.rm': 'Roadmap',
+            'cm.r1': 'Shipped',
+            'cm.r2': 'Next',
+            'cm.r3': 'Wanted',
+            'cm.s1': 'Encrypted core, audit chain, rotation reminders',
+            'cm.s2': 'MCP access, HTTP proxy injection, SSH bastion',
+            'cm.s3': 'Aliyun / Tencent IP allowlist auto-update',
+            'cm.s4': 'Tray app, auto-lock, encrypted backups',
+            'cm.n1': 'Signed builds and auto-update',
+            'cm.n2': 'Audit log export',
+            'cm.n3': 'UI localisation (zh / en)',
+            'cm.w1': 'Team vault (self-hosted, local)',
+            'cm.w2': 'Read-only mobile view',
+            'cm.w3': 'More injection adapters (K8s, databases)',
+            'au.kicker': 'Maintainer',
+            'au.name': '焱云老李',
+            'au.note':
+              'Maintainer of FlintKeep. Questions, requests and bug reports are all welcome on GitHub — the code is public.',
+            'ct.kicker': 'Contact',
+            'ct.h2': 'Something not working? Ping me',
+            'ct.p':
+              'Usage questions, feature requests, a bug you want fixed — scan the code and say hi. If you found a vulnerability, tell me privately first.',
+            'ct.who': 'WeChat · 李先生',
+            'ct.scan': 'Scan to add · mention “FlintKeep”',
+            'ct.expire': 'Personal QR codes expire — if this one has, open an issue on GitHub instead.',
+            'fq.kicker': 'FAQ',
+            'fq.h2': 'Straight answers',
+            'fq.q1': 'Where is my data stored?',
+            'fq.a1':
+              'Only on your own disk, as AES-256-GCM ciphertext. No cloud copy, and no server that could read it.',
+            'fq.q2': 'What if I forget the master passphrase?',
+            'fq.a2':
+              'You cannot open it. There is no recovery backdoor — that is exactly why it is safe. Keep the passphrase and the emergency kit in two separate places.',
+            'fq.q3': 'Does the agent really never see my keys?',
+            'fq.a3':
+              'By default it does not. Over MCP the agent gets a short-lived token; the real secret is injected by the local proxy and expires after use.',
+            'fq.q4': 'Which platforms are supported?',
+            'fq.a4': 'macOS, Windows and Linux desktop builds. The CLI and MCP server on Linux share the same core.',
+            'st.h2': 'Star it if it helps',
+            'st.p':
+              'The most useful support for an open-source project — and issues telling us what you want it to do are welcome too.',
+            'st.cta': 'Open GitHub',
+            'ft.h2': 'More than a password manager',
+            'ft.sub':
+              'Credentials, assets, project files, an AI assistant and a run workbench — one vault for all of it, entirely on your device.',
+            'f1.t': 'Encrypted on-device',
+            'f1.p':
+              'The whole vault is written to your local disk as <code>AES-256-GCM</code> ciphertext. Locked, it is unreadable; lose a backup file and whoever finds it gets ciphertext, nothing else.',
+            'f2.t': 'A vault that talks',
+            'f2.p':
+              'A built-in AI assistant speaks <code>MCP</code>: ask for "the login key of server #7" and it is on your screen. Agents can register assets, check ports and run inspections.',
+            'f3.t': 'Run workbench',
+            'f3.p':
+              'Register how each local project starts, its dependencies and ports. One click to start and stop — dependencies are torn down with it, containers leave nothing behind.',
+            'f4.t': 'Full audit trail',
+            'f4.p':
+              'Who touched which asset and when, every agent operation — the audit log keeps it all. Sensitive fields reveal on demand and hide again.',
+            'sc.h2': 'Security is the architecture, not a slogan',
+            'sc.sub': 'Three principles baked into the design — not just written in the PR copy.',
+            'r1.t': 'Keys never touch the cloud',
+            'r1.p':
+              'Encryption and decryption happen on your device. There is no "cloud sync copy" and no server that could see your plaintext — because your data simply is not there.',
+            'r2.t': 'Open source, auditable',
+            'r2.p':
+              'AGPL-3.0, fully public code. Do not take our word for it — build it yourself, or just read the source.',
+            'r3.t': 'Least privilege',
+            'r3.p':
+              'Agents access through allowlists, sensitive fields reveal on demand and re-hide afterwards, and every step lands in the audit log.',
+            'fl.n1': 'Your device · plaintext',
+            'fl.n2': 'Ciphertext on local disk',
+            'fl.mid': '← AI assistant · local MCP →',
+            'fl.block': 'Internet ✗',
+            'dl.h2': 'Bring the vault back home',
+            'dl.p':
+              'Free and open source. Grab an installer from GitHub Releases — or build it yourself from the source.',
+            'dl.cta1': 'Download installer',
+            'foot.top': 'Back to top ↑',
+          },
+          zh: {
+            title: '燧垒 FlintKeep — 数据不出设备的加密保险库',
+            brand: '燧垒',
+            brand2: '燧垒 FlintKeep',
+            'nav.features': '特性',
+            'nav.security': '安全',
+            'nav.download': '下载',
+            'hero.kicker': '本地优先 · AES-256-GCM · 开源',
+            'hero.h1': '把密钥锁回<em>你自己的设备</em>',
+            'hero.sub':
+              '燧垒 FlintKeep 是一个<b>本地优先</b>的凭证与资产保险库：服务器、平台账号、API 密钥、项目档案，全部用 <b>AES-256-GCM</b> 加密在你自己的电脑里。AI 助手能帮你查询和操作——但数据<b>永不离开设备</b>。',
+            'hero.cta1': '立即获取',
+            'hero.cta2': '看看它能做什么',
+            chip1: '数据不出设备',
+            chip3: 'MCP 原生集成',
+            'sb.unlocked': '已解锁',
+            'sb.local': '本地加密',
+            'sb.cloud': '云端副本 0',
+            'sb.off': '互联网 ✗ 拿不到',
+            'pv.h2': '保险库里长什么样',
+            'pv.sub': '真实界面，演示数据。日常最常用的六块屏幕。',
+            'pv.c1': '<b>AI 助手</b>——用大白话操作保险库',
+            'pv.c2': '<b>资产清单</b>——服务器、账号、密钥一屏尽收',
+            'pv.c3': '<b>机房</b>——服务器机位的实时大屏',
+            'pv.c4': '<b>审计日志</b>——每一步都有据可查',
+            'pv.c5': '<b>运行工作台</b>——项目与依赖一键启停',
+            'pv.c6': '<b>MCP 接入</b>——几分钟把你的 Agent 接上保险库',
+            'pv.hint': '点中间那张放大 · ← → 左右翻页',
+            'pv.hint2': ' · 鼠标移入暂停自动播放',
+            'nav.design': '设计',
+            'nav.community': '社区',
+            'nav.faq': '常见问题',
+            'foot.contrib': '参与贡献',
+            'foot.issues': '问题反馈',
+            'vs.kicker': '反馈',
+            'vs.h2': '用户怎么说',
+            'vs.sub': '以下三则是示例反馈（演示人设），只用于版式；上线前请换成真实评价。',
+            'vs.tag': '示例',
+            'vs.q1': '再也不用把 SSH 密钥贴进聊天窗口了——Agent 直接问保险库，不经我手。',
+            'vs.n1': '阿哲 · 独立开发者',
+            'vs.a1': '四个副业的服务器与 API Key',
+            'vs.av1': '哲',
+            'vs.q2': '服务器和密钥都在一处，事后还能翻审计日志，看我的 Agent 到底碰过什么。',
+            'vs.n2': 'Lena · 平台工程师',
+            'vs.a2': '给电商团队管三十多台机器',
+            'vs.av2': 'L',
+            'vs.q3': '接 MCP 大概三分钟，我的 Agent 只拿到它要用的那几把钥匙，多的一点没有。',
+            'vs.n3': '老周 · 运维负责人',
+            'vs.a3': '值班表终于能睡个整觉',
+            'vs.av3': '周',
+            'pv.kicker': '产品巡览',
+            'ft.kicker': '特性',
+            'sc.kicker': '安全',
+            'dl.kicker': '开始使用',
+            'ds.kicker': '设计',
+            'ds.h2': '它是怎么搭起来的',
+            'ds.sub':
+              '一份加密内核，三条入口：桌面界面、Agent 说话的 MCP 服务、把真密钥注入出去的本地代理。内核之上，任何一层都拿不到明文密钥。',
+            'ds.r1k': '使用层',
+            'ds.r2k': '接口层',
+            'ds.r3k': '内核',
+            'ds.r4k': '存储',
+            'ds.d1t': '一个内核，三道门',
+            'ds.d1p':
+              '界面、CLI、MCP 服务全都调 src/core：白名单、脱敏、审计改一处，三处同时生效。不用维护第二套实现，也就没有实现漂移。',
+            'ds.d2t': 'Agent 拿令牌，不拿密钥',
+            'ds.d2p':
+              'Model B 给 Agent 一张短期令牌和一个本地代理地址，真凭证由代理在服务端注入，令牌用完即失效。HTTP、云签名、SSH 都走同一条规矩。',
+            'ds.d3t': '密钥只在内存里',
+            'ds.d3p':
+              '主密钥由口令经 PBKDF2（21 万轮）派生，keystore 只存 salt 与校验值；锁定即停止解密，明文从不落盘。',
+            'ds.stack': '技术栈',
+            'ds.cmpH': '为什么不直接用密码管理器？',
+            'ds.c1': '加密库留在本机',
+            'ds.c1a': '云同步托管',
+            'ds.c1b': '服务端托管',
+            'ds.c2': 'Agent 经 MCP 自取凭证',
+            'ds.c2a': '不支持',
+            'ds.c2b': 'CLI / SDK',
+            'ds.c3': '真密钥不进 Agent 上下文',
+            'ds.c3a': '不支持',
+            'ds.c3b': '部分支持',
+            'ds.c4': '云厂商请求签名注入（SigV4 / 阿里云 / 腾讯云）',
+            'ds.c4a': '不支持',
+            'ds.c4b': '不支持',
+            'ds.c5': 'SSH 本地堡垒（令牌登录）',
+            'ds.c5a': '不支持',
+            'ds.c5b': '不支持',
+            'ds.note':
+              '1Password™ 是 AgileBits Inc. 的商标；Bitwarden、Infisical、HashiCorp Vault 为各自所有者所有。燧垒与上述产品无从属关系，本表仅作功能层面的描述性对比。',
+            'cm.kicker': '社区',
+            'cm.h2': '维护者与社区',
+            'cm.sub': '燧垒是 AGPL-3.0 开源项目，Issue、补丁、翻译都欢迎。',
+            'cm.c1': '01 · 报告',
+            'cm.c1t': '提个 Issue',
+            'cm.c1p': '告诉我们需要它能做什么、或者哪里坏了。能复现的步骤比截图有用。',
+            'cm.c2': '02 · 贡献',
+            'cm.c2t': '文档、翻译、适配器',
+            'cm.c2p': '多语言词条、这个落地页、还有注入适配器，都是最容易上手的地方。',
+            'cm.c3': '03 · 披露',
+            'cm.c3t': '安全优先',
+            'cm.c3p': '发现漏洞请先私下告知维护者，别把利用细节贴在公开 issue 里。',
+            'cm.note':
+              '<b>协议：</b>AGPL-3.0-only。可以 fork、自用、改代码；如果把改过的版本当服务对外提供，需要公开你的改动。名称与 Logo 不在授权范围内。',
+            'cm.rm': '路线图',
+            'cm.r1': '已完成',
+            'cm.r2': '接下来',
+            'cm.r3': '想做',
+            'cm.s1': '加密内核、审计链、轮换提醒',
+            'cm.s2': 'MCP 接入、HTTP 代理注入、SSH 堡垒',
+            'cm.s3': '阿里云 / 腾讯云白名单自动更新',
+            'cm.s4': '托盘常驻、自动锁定、加密备份',
+            'cm.n1': '安装包签名与自动更新',
+            'cm.n2': '审计日志导出',
+            'cm.n3': '界面多语言（中 / 英）',
+            'cm.w1': '团队共享库（本地自托管）',
+            'cm.w2': '移动端只读查看',
+            'cm.w3': '更多注入适配（K8s / 数据库）',
+            'au.kicker': '维护者',
+            'au.name': '焱云老李',
+            'au.note': '燧垒的维护者。使用问题、需求建议、bug 反馈，都可以直接在 GitHub 上提——代码是公开的。',
+            'ct.kicker': '联系',
+            'ct.h2': '用着不顺手？直接找我',
+            'ct.p': '用法问题、功能建议、想修掉的 bug，扫码加我，备注「燧垒」就行。要是发现安全漏洞，麻烦先私下说。',
+            'ct.who': '微信 · 李先生',
+            'ct.scan': '扫码添加 · 备注「燧垒」',
+            'ct.expire': '个人二维码有有效期，过期了就在 GitHub 上提个 Issue。',
+            'fq.kicker': '常见问题',
+            'fq.h2': '你大概会问',
+            'fq.q1': '我的数据存在哪？',
+            'fq.a1': '只在你自己的磁盘上，AES-256-GCM 密文。没有云副本，也没有能读到明文的服务器。',
+            'fq.q2': '忘记主口令怎么办？',
+            'fq.a2': '打不开。没有找回后门——这正是它安全的原因。主口令和应急包请分开两处备份。',
+            'fq.q3': 'Agent 真的看不到密钥？',
+            'fq.a3': '默认看不到。Agent 通过 MCP 只拿到短期令牌，真密钥由本地代理注入，用完即失效。',
+            'fq.q4': '支持哪些平台？',
+            'fq.a4': 'macOS / Windows / Linux 桌面端；Linux 上的 CLI 与 MCP 服务共用同一套内核。',
+            'st.h2': '有用就给个 Star',
+            'st.p': '这是开源项目最实在的支持；也欢迎提 Issue，说你想让它做什么。',
+            'st.cta': '去 GitHub',
+            'ft.h2': '它不只是存密码',
+            'ft.sub': '凭证、资产、项目档案、AI 助手、启停工作台——一个库管全，而且全在你设备上。',
+            'f1.t': '端侧加密，密文落盘',
+            'f1.p':
+              '全库 <code>AES-256-GCM</code> 加密后写本地磁盘，锁定状态下明文不可见；就算备份文件丢了，别人拿到的也只是密文。',
+            'f2.t': '会说话的资产库',
+            'f2.p':
+              '内置 AI 助手，走 <code>MCP</code> 协议：问一句「7 号服务器的登录密钥」直接给你。Agent 还能登记资产、查端口、跑巡检。',
+            'f3.t': '运行工作台',
+            'f3.p':
+              '本机项目的启动命令、依赖、端口全登记；一键启动、关闭连带停依赖，容器不残留——不用再翻笔记找「这个项目怎么起」。',
+            'f4.t': '全程审计留痕',
+            'f4.p':
+              '谁在什么时间动了哪条资产、Agent 做过什么操作，审计日志一条不落。敏感字段按需揭示，眼睛看完就合上。',
+            'sc.h2': '安全不是口号，是架构',
+            'sc.sub': '三条原则写进设计里，而不是写在 PR 里。',
+            'r1.t': '密钥不落云',
+            'r1.p':
+              '加密与解密都发生在你的设备。没有「云端同步副本」，也没有服务端能看到你的明文——因为服务器上根本没有。',
+            'r2.t': '开源可审计',
+            'r2.p': 'AGPL-3.0 协议，代码全部公开。不放心？自己从头编译一个，或者直接读源码。',
+            'r3.t': '权限最小化',
+            'r3.p': 'Agent 走白名单访问，敏感字段按需揭示、用完即隐；每一步操作都有审计日志可回溯。',
+            'fl.n1': '你的设备 · 明文',
+            'fl.n2': '密文落盘（本地）',
+            'fl.mid': '← AI 助手 · 本地 MCP →',
+            'fl.block': '互联网 ✗',
+            'dl.h2': '现在就把保险库搬回自己家',
+            'dl.p': '开源免费，从 GitHub Releases 下载安装包；喜欢自己动手的，源码就在仓库里。',
+            'dl.cta1': '下载安装包',
+            'foot.top': '回到顶部 ↑',
+          },
+        };
+        var lang = 'en';
+        try {
+          lang = localStorage.getItem('flintkeep-lang') || '';
+        } catch (e) {}
+        if (lang !== 'zh' && lang !== 'en') {
+          // 用户没手动选过语言时跟随浏览器：中文环境先看中文，其它默认英文
+          var navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+          lang = navLang.indexOf('zh') === 0 ? 'zh' : 'en';
+        }
+
+        function apply() {
+          var d = I18N[lang] || I18N.en;
+          document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+          document.title = d['title'];
+          document.querySelectorAll('[data-i18n]').forEach(function (el) {
+            el.textContent = d[el.dataset.i18n] || el.textContent;
+          });
+          document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+            el.innerHTML = d[el.dataset.i18nHtml] || el.innerHTML;
+          });
+          document.querySelectorAll('.lang button').forEach(function (b) {
+            b.classList.toggle('on', b.dataset.setLang === lang);
+          });
+          syncShots();
+        }
+
+        /* 截图随语言切换：每种语言一整套图，缺英文图时退回中文图，避免破图 */
+        function shotSrc(key, l) {
+          return 'assets/app-' + key + '-' + (l === 'zh' ? 'zh' : 'en') + '.jpg';
+        }
+        function syncShots() {
+          document.querySelectorAll('.shot img[data-shot]').forEach(function (img) {
+            var want = shotSrc(img.dataset.shot, lang);
+            var cap = img.closest('.shot') ? img.closest('.shot').querySelector('figcaption') : null;
+            if (cap) img.alt = (cap.textContent || '').trim();
+            if (img.dataset.loaded === want) return;
+            img.dataset.loaded = want;
+            var zhSrc = shotSrc(img.dataset.shot, 'zh');
+            img.onerror = function () {
+              if (img.src.indexOf(zhSrc) === -1) {
+                img.src = zhSrc;
+                return;
+              }
+              img.onerror = null;
+              // 两套图都还没就位：先隐藏这一格，别留破图或空框（补上文件后自动出现）
+              var fig = img.closest('.shot');
+              if (fig) fig.hidden = true;
+            };
+            img.onload = function () {
+              var f = img.closest('.shot');
+              if (f) f.hidden = false; // 文件就位才显形，缺图时不留空框
+            };
+            img.src = want;
+            if (deckStage) applyDeck();
+            var viewer = document.getElementById('shotViewer');
+            if (viewer && viewer.classList.contains('open') && viewer.dataset.key === img.dataset.shot) {
+              viewer.querySelector('img').src = want;
+            }
+          });
+        }
+
+        /* ===== 灯箱：点击放大 + 左右切换 ===== */
+        var lb = document.createElement('div');
+        lb.id = 'shotViewer';
+        lb.className = 'lb';
+        lb.setAttribute('role', 'dialog');
+        lb.setAttribute('aria-modal', 'true');
+        lb.setAttribute('aria-label', 'Screenshot viewer');
+        lb.innerHTML =
+          '<div class="lb-stage">' +
+          '<button type="button" class="lb-btn lb-close" aria-label="Close viewer">' +
+          '<svg viewBox="0 0 12 12" width="12" height="12" fill="none" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>' +
+          '</button>' +
+          '<button type="button" class="lb-btn lb-side prev" aria-label="Previous screenshot">' +
+          '<svg viewBox="0 0 12 12" width="14" height="14" fill="none" aria-hidden="true"><path d="M7.5 2.5L4 6l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</button>' +
+          '<button type="button" class="lb-btn lb-side next" aria-label="Next screenshot">' +
+          '<svg viewBox="0 0 12 12" width="14" height="14" fill="none" aria-hidden="true"><path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</button>' +
+          '<figure class="lb-figure"><img alt="" decoding="async" /></figure>' +
+          '<div class="lb-meta"><span class="txt"></span><span class="lb-count"></span></div>' +
+          '</div>';
+        document.body.appendChild(lb);
+        var lbImg = lb.querySelector('img');
+        var lbText = lb.querySelector('.txt');
+        var lbCount = lb.querySelector('.lb-count');
+        var shots = Array.prototype.slice.call(document.querySelectorAll('.shot'));
+        var shotIndex = 0;
+        var lastFocus = null;
+
+        function visibleShots() {
+          return shots.filter(function (f) {
+            return !f.hidden;
+          });
+        }
+        function showShot(i) {
+          var list = visibleShots();
+          if (!list.length) return;
+          shotIndex = ((i % list.length) + list.length) % list.length;
+          var fig = list[shotIndex];
+          var img = fig.querySelector('img');
+          var key = img.dataset.shot;
+          lbImg.src = shotSrc(key, lang);
+          lbImg.onerror = function () {
+            lbImg.onerror = null;
+            lbImg.src = shotSrc(key, 'zh');
+          };
+          var cap = fig.querySelector('figcaption');
+          var txt = cap ? (cap.textContent || '').replace(/\s+/g, ' ').trim() : img.alt || '';
+          lbText.textContent = txt;
+          lbImg.alt = txt;
+          lbCount.textContent = shotIndex + 1 + ' / ' + list.length;
+          lb.dataset.key = key;
+          // 预载前后一张，翻看时不闪白
+          [(shotIndex + 1) % list.length, (shotIndex - 1 + list.length) % list.length].forEach(function (n) {
+            var pre = new Image();
+            pre.src = shotSrc(list[n].querySelector('img').dataset.shot, lang);
+          });
+        }
+        function openShot(i) {
+          lastFocus = document.activeElement;
+          showShot(i);
+          lb.classList.add('open');
+          document.body.classList.add('lb-open');
+          lb.querySelector('.lb-close').focus();
+        }
+        function closeShot() {
+          lb.classList.remove('open');
+          document.body.classList.remove('lb-open');
+          delete lb.dataset.key;
+          if (lastFocus && lastFocus.focus) lastFocus.focus();
+        }
+        shots.forEach(function (fig, i) {
+          var frame = fig.querySelector('.frame');
+          function activate(e) {
+            e.preventDefault();
+            // 侧边那张先转到中间，正中那张才开灯箱
+            if (deckStage && !fig.classList.contains('is-active')) {
+              goDeck(shots.indexOf(fig));
+              return;
+            }
+            openShot(visibleShots().indexOf(fig));
+          }
+          frame.addEventListener('click', activate);
+          frame.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') activate(e);
+          });
+        });
+
+        /* ===== 幻灯片：中间一张最大，两侧逐级缩小并向后倾斜 ===== */
+        var deckEl = document.getElementById('deck');
+        var deckStage = deckEl ? deckEl.querySelector('.deck-stage') : null;
+        var deckCap = deckEl ? deckEl.querySelector('[data-deck-cap]') : null;
+        var deckIdx = deckEl ? deckEl.querySelector('[data-deck-idx]') : null;
+        var deckDots = deckEl ? deckEl.querySelector('.deck-dots') : null;
+        var deckProg = deckEl ? deckEl.querySelector('.deck-prog i') : null;
+        var deckIndex = 0;
+        var deckTimer = null;
+        var DECK_MS = 6500;
+
+        function deckCards() {
+          return Array.prototype.slice.call(deckStage.querySelectorAll('.shot'));
+        }
+        function pad2(n) {
+          return (n < 10 ? '0' : '') + n;
+        }
+        function motionOff() {
+          return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        }
+
+        /* 舞台高度按卡片真实高度回填：不再依赖固定宽高比，窄屏也不裁切 */
+        function syncDeckHeight() {
+          if (!deckStage) return;
+          var h = 0;
+          deckCards().forEach(function (fig) {
+            if (!fig.hidden) h = Math.max(h, fig.offsetHeight);
+          });
+          if (!h) return;
+          deckStage.style.setProperty('--deck-h', Math.round(h + 32) + 'px');
+        }
+
+        /* 档位姿态：0 正中、±1 相邻、±2 更远，再往外淡出 */
+        function deckPose(off) {
+          var abs = Math.abs(off);
+          var sign = off > 0 ? 1 : -1;
+          if (abs === 0) return { x: 0, z: 0, ry: 0, s: 1, o: 1, b: 1 };
+          if (abs === 1) return { x: 40, z: -110, ry: -17 * sign, s: 0.82, o: 1, b: 0.62 };
+          if (abs === 2) return { x: 74, z: -230, ry: -24 * sign, s: 0.68, o: 0.45, b: 0.42 };
+          return { x: 96, z: -300, ry: -30 * sign, s: 0.6, o: 0, b: 0.3 };
+        }
+
+        function startProgress() {
+          if (!deckProg || motionOff()) return;
+          deckProg.style.transition = 'none';
+          deckProg.style.width = '0%';
+          void deckProg.offsetWidth;
+          deckProg.style.transition = 'width ' + DECK_MS + 'ms linear';
+          deckProg.style.width = '100%';
+        }
+        function clearProgress() {
+          if (!deckProg) return;
+          deckProg.style.transition = 'none';
+          deckProg.style.width = '0%';
+        }
+
+        function applyDeck() {
+          if (!deckStage) return;
+          var cards = deckCards();
+          var n = cards.length;
+          if (!n) return;
+          deckIndex = (deckIndex + n) % n;
+          cards.forEach(function (fig, i) {
+            var off = i - deckIndex;
+            if (off > n / 2) off -= n;
+            if (off < -n / 2) off += n;
+            var abs = Math.abs(off);
+            var p = deckPose(off);
+            var tx = off === 0 ? 0 : off > 0 ? p.x : -p.x;
+            fig.style.transform =
+              'translate(-50%, -50%) translateX(' +
+              tx +
+              '%) translateZ(' +
+              p.z +
+              'px) rotateY(' +
+              p.ry +
+              'deg) scale(' +
+              p.s +
+              ')';
+            fig.style.opacity = String(p.o);
+            fig.style.zIndex = String(20 - abs);
+            fig.style.filter = abs === 0 ? 'none' : 'brightness(' + p.b + ') saturate(0.92)';
+            fig.classList.toggle('is-active', off === 0);
+            fig.classList.toggle('is-side', abs === 1 || abs === 2);
+            fig.setAttribute('aria-hidden', abs <= 1 ? 'false' : 'true');
+            var f = fig.querySelector('.frame');
+            if (f) f.tabIndex = off === 0 ? 0 : -1;
+          });
+          var active = cards[deckIndex];
+          var cap = active.querySelector('figcaption');
+          if (deckCap) deckCap.innerHTML = cap ? cap.innerHTML : '';
+          if (deckIdx) deckIdx.textContent = pad2(deckIndex + 1) + ' / ' + pad2(n);
+          if (deckDots) {
+            Array.prototype.forEach.call(deckDots.children, function (d, i) {
+              d.classList.toggle('on', i === deckIndex);
+              d.setAttribute('aria-selected', i === deckIndex ? 'true' : 'false');
+            });
+          }
+          if (deckTimer) startProgress();
+        }
+
+        function goDeck(i) {
+          deckIndex = i;
+          applyDeck();
+        }
+        function deckStep(d) {
+          deckIndex += d;
+          applyDeck();
+        }
+
+        function buildDeckDots() {
+          if (!deckDots || deckDots.children.length) return;
+          deckCards().forEach(function (fig, i) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'deck-dot';
+            b.setAttribute('role', 'tab');
+            b.setAttribute('aria-label', 'Screenshot ' + (i + 1));
+            b.addEventListener('click', function () {
+              stopAuto();
+              goDeck(i);
+            });
+            deckDots.appendChild(b);
+          });
+        }
+
+        function startAuto() {
+          stopAuto();
+          if (!deckEl) return;
+          // 尊重「减少动效」设置，避免灯箱打开时在背后换页
+          if (motionOff()) return;
+          startProgress();
+          deckTimer = setInterval(function () {
+            if (document.body.classList.contains('lb-open') || document.hidden) return;
+            deckIndex += 1;
+            applyDeck();
+          }, DECK_MS);
+        }
+        function stopAuto() {
+          if (deckTimer) {
+            clearInterval(deckTimer);
+            deckTimer = null;
+          }
+          clearProgress();
+        }
+
+        if (deckEl) {
+          buildDeckDots();
+          syncDeckHeight();
+          applyDeck();
+          startAuto();
+          deckEl.querySelector('.deck-prev').addEventListener('click', function () {
+            stopAuto();
+            deckStep(-1);
+          });
+          deckEl.querySelector('.deck-next').addEventListener('click', function () {
+            stopAuto();
+            deckStep(1);
+          });
+          deckEl.addEventListener('mouseenter', stopAuto);
+          deckEl.addEventListener('mouseleave', startAuto);
+          deckEl.addEventListener('focusin', stopAuto);
+          deckEl.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              stopAuto();
+              deckStep(-1);
+            }
+            if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              stopAuto();
+              deckStep(1);
+            }
+          });
+          // 窗口缩放或转屏后重新量一次卡片高度
+          if (window.ResizeObserver && deckStage) {
+            new ResizeObserver(function () {
+              syncDeckHeight();
+            }).observe(deckStage);
+          } else {
+            window.addEventListener('resize', syncDeckHeight);
+          }
+          window.addEventListener('load', syncDeckHeight);
+          document.addEventListener('visibilitychange', function () {
+            if (document.hidden) stopAuto();
+            else startAuto();
+          });
+          var deckX0 = null;
+          deckStage.addEventListener(
+            'touchstart',
+            function (e) {
+              if (e.touches.length === 1) {
+                deckX0 = e.touches[0].clientX;
+                stopAuto();
+              }
+            },
+            { passive: true }
+          );
+          deckStage.addEventListener(
+            'touchend',
+            function (e) {
+              if (deckX0 === null) return;
+              var dx = (e.changedTouches[0] ? e.changedTouches[0].clientX : deckX0) - deckX0;
+              deckX0 = null;
+              if (Math.abs(dx) > 40) deckStep(dx < 0 ? 1 : -1);
+            },
+            { passive: true }
+          );
+        }
+        lb.querySelector('.lb-close').addEventListener('click', closeShot);
+        lb.querySelector('.lb-side.prev').addEventListener('click', function () {
+          showShot(shotIndex - 1);
+        });
+        lb.querySelector('.lb-side.next').addEventListener('click', function () {
+          showShot(shotIndex + 1);
+        });
+        lb.addEventListener('click', function (e) {
+          if (e.target === lb) closeShot();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (!lb.classList.contains('open')) return;
+          if (e.key === 'Escape') {
+            closeShot();
+            return;
+          }
+          if (e.key === 'ArrowRight') {
+            showShot(shotIndex + 1);
+            return;
+          }
+          if (e.key === 'ArrowLeft') {
+            showShot(shotIndex - 1);
+            return;
+          }
+          if (e.key === 'Tab') {
+            var focusables = [
+              lb.querySelector('.lb-close'),
+              lb.querySelector('.lb-side.prev'),
+              lb.querySelector('.lb-side.next'),
+            ];
+            var first = focusables[0],
+              last = focusables[focusables.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        });
+        // 触屏左右滑
+        (function () {
+          var x0 = null;
+          lb.addEventListener(
+            'touchstart',
+            function (e) {
+              if (e.touches.length === 1) x0 = e.touches[0].clientX;
+            },
+            { passive: true }
+          );
+          lb.addEventListener(
+            'touchend',
+            function (e) {
+              if (x0 === null) return;
+              var dx = (e.changedTouches[0] ? e.changedTouches[0].clientX : x0) - x0;
+              x0 = null;
+              if (Math.abs(dx) > 45) showShot(shotIndex + (dx < 0 ? 1 : -1));
+            },
+            { passive: true }
+          );
+        })();
+
+        function setLang(l) {
+          lang = l;
+          try {
+            localStorage.setItem('flintkeep-lang', l);
+          } catch (e) {}
+          apply();
+        }
+        document.querySelectorAll('.lang button').forEach(function (b) {
+          b.addEventListener('click', function () {
+            setLang(b.dataset.setLang);
+          });
+        });
+        apply();
+      })();
+    </script>
+  </body>
+</html>

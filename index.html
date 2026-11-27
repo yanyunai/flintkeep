@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      生产环境由 server.ts 下发同名 CSP 响应头；这里的 meta 是开发态（Vite）兜底。
+      ws://127.0.0.1:8790 只给 Vite HMR 用，生产构建不会发起该连接。
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws://127.0.0.1:8790; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>燧垒 FlintKeep</title>
+  </head>
+  <body style="margin:0;">
+    <div id="app"></div>
+    <script type="module" src="/src/renderer/main.ts"></script>
+  </body>
+</html>

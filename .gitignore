@@ -1,0 +1,22 @@
+node_modules/
+dist/
+dist-electron/
+data/
+data-smoke-tmp/
+data-smoke-memo-tmp/
+data-smoke-wl-tmp/
+*.log
+.DS_Store
+.env
+.env.*
+*.pem
+
+# 本地 IDE/Agent 数据
+.codebuddy/
+.zwork/
+.vscode/
+.idea/
+
+# 设计原型只允许提交假数据（docs / 截图样例）。
+# 若要用真实保险库数据做原型，请把快照放到仓库外，不要临时改这里。
+# design/prototype/*.json

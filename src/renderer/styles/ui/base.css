@@ -1,0 +1,331 @@
+/* 由 scripts/build-ui-scope.mjs 生成，请勿手改。
+ * 源文件：design/system/base.css
+ * 作用域：[data-mgui]（新界面根容器，携带 data-template / data-theme）
+ */
+/* ============================================================
+   base.css · 语义组件层（模板无关）
+   规则：本文件只允许出现 var(--*)，禁止任何颜色/字体字面量。
+   页面只使用这里的语义类名；视觉差异由 tpl-*.css 提供。
+   ============================================================ */
+
+/* 结构尺度：所有模板共享的节奏（模板可在自身文件中覆盖） */
+[data-mgui] {
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px;
+  --f-xxs: 10px; --f-xs: 11.5px; --f-sm: 12.5px; --f-md: 13.5px; --f-lg: 15px; --f-xl: 20px;
+}
+
+[data-mgui], [data-mgui] * { box-sizing: border-box; }
+[data-mgui] { margin: 0; height: 100%; }
+[data-mgui] { overflow: hidden; }
+/* 元素级复位：:where([data-mgui]) 前缀把特异性降到 0,0,1，
+   否则 [data-mgui] button（0,1,1）会与未重构页面的裸 button scoped 规则打平并靠引入顺序胜出，
+   把 13px/内边距全部击穿成 16px/0（docs/19 §2-①） */
+:where([data-mgui]) button, :where([data-mgui]) input, :where([data-mgui]) select, :where([data-mgui]) textarea { font: inherit; color: inherit; }
+:where([data-mgui]) button { cursor: pointer; border: 0; background: none; padding: 0; }
+[data-mgui] .num { font-variant-numeric: tabular-nums; }
+
+[data-mgui] {
+  height: 100vh;
+  background: var(--bg); color: var(--text);
+  font-family: var(--font-ui); font-size: var(--f-md); line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 壳：侧栏 + 主区 ---------- */
+[data-mgui] .shell { display: grid; grid-template-columns: var(--side-wx) minmax(0,1fr); height: 100vh; transition: grid-template-columns .24s cubic-bezier(.32,.72,0,1); }
+[data-mgui] .shell.side-open { grid-template-columns: var(--side-w) minmax(0,1fr); }
+
+[data-mgui] .side { background: var(--side-bg); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: var(--s-4) var(--s-3) var(--s-3); gap: 2px; overflow-y: auto; transition: background-color .2s ease, border-color .2s ease; }
+/* 深浅色切换平滑化：.app 是 data-mgui 的外层父级，生成脚本会给规则加 [data-mgui] 前缀导致永远匹配不上，
+   其 200ms 颜色过渡写在 App.vue 样式里；这里只保留侧栏的 reduced-motion 关闭 */
+@media (prefers-reduced-motion: reduce) { [data-mgui] .side { transition: none; } }
+[data-mgui] .side-brand { display: flex; align-items: center; gap: var(--s-3); padding: 0 var(--s-1) var(--s-4); }
+[data-mgui] .side-brand .logo { width: 34px; height: 34px; border-radius: var(--r-md); flex: none; margin: 0 auto; display: grid; place-items: center; font-weight: 800; font-size: var(--f-lg); background: var(--accent); color: var(--accent-ink); box-shadow: var(--logo-shadow); }
+[data-mgui] .shell.side-open .side-brand .logo { margin: 0; }
+[data-mgui] .side-brand .name { display: none; font-family: var(--font-display); font-size: var(--f-lg); font-weight: var(--w-brand); letter-spacing: var(--ls-brand); white-space: nowrap; }
+[data-mgui] .shell.side-open .side-brand .name { display: inline; }
+
+[data-mgui] .side-group { display: none; font-family: var(--font-mono); font-size: var(--f-xxs); letter-spacing: var(--ls-caps); text-transform: var(--tt-caps); color: var(--text-3); padding: var(--s-3) var(--s-3) var(--s-1); }
+[data-mgui] .shell.side-open .side-group { display: block; }
+[data-mgui] .side-sep { width: 22px; height: 1px; background: var(--line-2); margin: var(--s-2) auto; }
+[data-mgui] .shell.side-open .side-sep { display: none; }
+
+/* 侧栏菜单是主要导航，不能按「最弱层级」--text-3 上色：
+   深色底上 #565c66 对比度只有 3:1，未选中项基本看不清 */
+[data-mgui] .side-item { width: 100%; height: var(--side-item-h); border-radius: var(--r-md); color: var(--text-2); font-size: var(--f-md); display: flex; align-items: center; justify-content: center; gap: var(--s-3); padding: 0 var(--s-3); transition: background .15s, color .15s; position: relative; white-space: nowrap; text-align: left; }
+[data-mgui] .side-item .ic { width: 16px; text-align: center; font-size: var(--f-lg); flex: none; display: var(--side-ic); }
+/* 线性 SVG 图标：固定 16px 方块随 currentColor 描边，取代 unicode 字形 */
+[data-mgui] .side-item .ic svg { width: 16px; height: 16px; display: block; }
+[data-mgui] .side-item .pg { font-family: var(--font-mono); font-size: var(--f-xxs); color: var(--text-3); flex: none; display: var(--side-pg); }
+[data-mgui] .side-item .nm { display: none; overflow: hidden; text-overflow: ellipsis; }
+[data-mgui] .side-item .leader { flex: 1; display: none; }
+[data-mgui] .shell.side-open .side-item { justify-content: var(--side-item-jc); }
+[data-mgui] .shell.side-open .side-item .nm { display: inline; }
+[data-mgui] .shell.side-open .side-item .leader { display: var(--side-leader); }
+[data-mgui] .side-item:hover { color: var(--text); background: var(--hover); }
+[data-mgui] .side-item.on { color: var(--accent); background: var(--accent-soft); font-weight: var(--w-side-on); }
+[data-mgui] .side-item.on::before { content: var(--side-on-bar); position: absolute; left: calc(-1 * var(--s-3)); top: 10px; bottom: 10px; width: 2px; background: var(--accent); border-radius: 2px; box-shadow: var(--side-on-glow); }
+[data-mgui] .side-item.on .pg { color: var(--accent); }
+[data-mgui] .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); padding-top: var(--s-2); }
+[data-mgui] .side-tgl { font-family: var(--font-mono); color: var(--text-3); }
+[data-mgui] .side-tgl:hover { color: var(--accent); }
+
+/* ---------- 状态条 / 刊头条 ---------- */
+[data-mgui] .statusbar { height: var(--statusbar-h); display: flex; align-items: center; gap: var(--s-5); padding: 0 var(--s-5); border-bottom: var(--statusbar-line); font-family: var(--font-mono); font-size: var(--f-xxs); letter-spacing: var(--ls-caps); color: var(--text-3); text-transform: var(--tt-caps); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+[data-mgui] .st-live { color: var(--accent); display: flex; align-items: center; gap: 6px; }
+[data-mgui] .st-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); animation: v-blink 2.4s infinite; }
+@keyframes v-blink { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+[data-mgui] .statusbar .sp { flex: 1; }
+
+[data-mgui] .main { display: flex; flex-direction: column; min-width: 0; }
+/* 滚动条统一走 token：细、半透明、不抢视线；右侧不再留一条「空白带」 */
+[data-mgui] .page {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--page-pad);
+}
+[data-mgui] .page::-webkit-scrollbar { width: 6px; height: 6px; }
+[data-mgui] .page::-webkit-scrollbar-track { background: transparent; }
+[data-mgui] .page::-webkit-scrollbar-thumb {
+  background: var(--scrollbar, rgba(128, 128, 128, .4));
+  border-radius: 3px;
+}
+[data-mgui] .page::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover, rgba(128, 128, 128, .6)); }
+[data-mgui] .page::-webkit-scrollbar-corner { background: transparent; }
+
+/* ---------- 页头 ---------- */
+[data-mgui] .page-head { display: flex; align-items: flex-end; gap: var(--s-5); margin-bottom: var(--s-6); flex-wrap: wrap; }
+[data-mgui] .kicker { font-family: var(--font-mono); font-size: var(--f-xxs); letter-spacing: var(--ls-caps); color: var(--text-3); text-transform: var(--tt-caps); }
+[data-mgui] .page-title { margin: var(--s-1) 0 0; font-family: var(--font-display); font-size: var(--f-display); font-weight: var(--w-title); letter-spacing: var(--ls-title); display: flex; align-items: baseline; gap: var(--s-3); }
+[data-mgui] .page-title .cnt { font-family: var(--font-mono); font-size: var(--f-md); color: var(--accent); font-weight: 500; }
+
+/* ---------- 搜索 ---------- */
+[data-mgui] .search { margin-left: auto; display: flex; align-items: center; gap: var(--s-3); width: var(--search-w); height: var(--ctl-h); padding: 0 var(--s-4); background: var(--panel); border: var(--ctl-border); border-radius: var(--r-md); color: var(--text-3); transition: border-color .15s, box-shadow .15s; }
+[data-mgui] .search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+[data-mgui] .search input { flex: 1; min-width: 0; border: 0; outline: none; background: none; font-size: var(--f-sm); color: var(--text); }
+[data-mgui] .search input::placeholder { color: var(--text-3); }
+[data-mgui] .search kbd { font-family: var(--font-mono); font-size: var(--f-xxs); color: var(--text-3); border: 1px solid var(--line-2); border-radius: var(--r-xs); padding: 1px 5px; }
+
+/* ---------- 按钮 ---------- */
+[data-mgui] .btn { height: var(--ctl-h); padding: 0 var(--s-4); border-radius: var(--r-md); font-size: var(--f-sm); font-weight: 600; display: inline-flex; align-items: center; gap: 7px; transition: all .15s; border: var(--ctl-border); color: var(--text-2); background: var(--panel); }
+[data-mgui] .btn:hover { color: var(--text); border-color: var(--line-2-strong); }
+[data-mgui] .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: var(--accent-btn-shadow); }
+[data-mgui] .btn.primary:hover { filter: brightness(1.06); }
+[data-mgui] .btn.sm { height: 28px; padding: 0 10px; font-size: var(--f-xs); border-radius: var(--r-sm); }
+[data-mgui] .btn.danger { color: var(--danger); }
+[data-mgui] .btn.danger:hover { border-color: var(--danger); }
+
+/* ---------- 统计卡 ---------- */
+/* 统计卡：auto-fit 响应式，窄窗口换行而不是被 overflow:hidden 裁切（docs/19 第二批 #4） */
+[data-mgui] .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-4); margin-bottom: var(--s-5); }
+[data-mgui] .stat { background: var(--panel); border: var(--card-border); border-radius: var(--r-lg); box-shadow: var(--sh-card); padding: var(--s-4) var(--s-5); min-width: 0; }
+[data-mgui] .stat .k { font-size: var(--f-xs); color: var(--text-3); letter-spacing: var(--ls-caps); text-transform: var(--tt-caps); }
+[data-mgui] .stat .v { font-family: var(--font-display); font-size: var(--f-stat); font-weight: var(--w-title); letter-spacing: -.02em; margin-top: 2px; }
+[data-mgui] .stat .v small { font-size: var(--f-sm); font-weight: 400; color: var(--text-3); }
+[data-mgui] .stat .v.warn { color: var(--warn); }
+
+/* ---------- 筛选 chips ---------- */
+[data-mgui] .chips { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; margin-bottom: var(--s-4); }
+[data-mgui] .chip { height: var(--chip-h); padding: 0 var(--s-3); border-radius: var(--chip-r); font-family: var(--font-mono); font-size: var(--f-xs); letter-spacing: .04em; color: var(--text-3); border: var(--chip-border); display: inline-flex; align-items: center; gap: 7px; transition: all .13s; }
+[data-mgui] .chip i { width: 5px; height: 5px; border-radius: 50%; display: var(--chip-dot); }
+[data-mgui] .chip:hover { color: var(--text); background: var(--hover); }
+[data-mgui] .chip.on { color: var(--accent); background: var(--accent-soft); border-color: var(--chip-on-border); font-weight: var(--w-side-on); }
+[data-mgui] .chip .c { color: var(--text-3); font-size: var(--f-xxs); }
+
+/* ---------- 表格（div grid 实现，列宽由页面级 CSS 给） ---------- */
+[data-mgui] .tbl { border-top: var(--tbl-top); }
+[data-mgui] .t-head, [data-mgui] .t-row { display: grid; align-items: center; gap: var(--s-4); padding: 0 var(--s-4); }
+[data-mgui] .t-head { height: 34px; font-family: var(--font-mono); font-size: var(--f-xxs); letter-spacing: var(--ls-caps); color: var(--text-3); text-transform: var(--tt-caps); user-select: none; border-bottom: var(--tbl-hline); }
+[data-mgui] .t-row { height: var(--row-h); border-bottom: var(--tbl-rline); transition: background .12s; position: relative; cursor: pointer; }
+[data-mgui] .t-row:hover { background: var(--hover); }
+[data-mgui] .t-row.sel { background: var(--accent-soft); }
+[data-mgui] .t-row.sel::before { content: var(--side-on-bar); position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--accent); box-shadow: var(--side-on-glow); }
+[data-mgui] .t-row.due { background: var(--due-row-bg); }
+[data-mgui] .t-row .idx { font-family: var(--font-mono); font-size: var(--f-xs); color: var(--text-3); }
+[data-mgui] .t-row .led { width: 7px; height: 7px; border-radius: 50%; justify-self: center; }
+[data-mgui] .t-row .n { font-family: var(--font-name); font-size: var(--f-name); font-weight: var(--w-name); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[data-mgui] .t-row .meta { font-family: var(--font-mono); font-size: var(--f-xs); color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[data-mgui] .t-row .tags { display: flex; gap: 5px; overflow: hidden; }
+[data-mgui] .tag { font-family: var(--font-mono); font-size: var(--f-xxs); color: var(--text-2); border: 1px solid var(--line-2); border-radius: var(--r-xs); padding: 2px 7px; white-space: nowrap; }
+[data-mgui] .t-row .tps { font-family: var(--font-mono); font-size: var(--f-xxs); letter-spacing: .1em; text-transform: var(--tt-caps); color: var(--text-3); text-align: right; }
+/* .due 只允许出现在小标签场景（.tag.due / 行内 .n 里的待轮换小字）；
+   裸 .due 会命中 .t-row.due 整行，把整行文字右移 8px、字体错乱（docs/19 第二批 #5） */
+[data-mgui] .tag.due, [data-mgui] .t-row .n .due { font-family: var(--font-mono); font-size: var(--f-xxs); color: var(--warn); letter-spacing: .06em; margin-left: var(--s-2); white-space: nowrap; }
+
+/* ---------- 空态 ---------- */
+[data-mgui] .empty { padding: 64px var(--s-4); text-align: center; color: var(--text-3); font-family: var(--font-mono); font-size: var(--f-sm); }
+
+/* ---------- 详情抽屉（皮肤决定右侧滑出 / 居中弹窗） ---------- */
+[data-mgui] .scrim { position: fixed; inset: 0; background: var(--scrim-bg); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: var(--z-scrim, 50); }
+[data-mgui] .drawer { position: fixed; z-index: var(--z-drawer, 60); background: var(--panel); border: var(--drawer-border); box-shadow: var(--drawer-shadow); border-radius: var(--drawer-r); display: flex; flex-direction: column; transition: transform .26s cubic-bezier(.32,.72,0,1), opacity .2s; }
+[data-mgui] .d-head { padding: var(--s-5) var(--s-6) var(--s-4); border-bottom: 1px solid var(--line); position: relative; flex: none; }
+[data-mgui] .d-id { font-family: var(--font-mono); font-size: var(--f-xxs); letter-spacing: var(--ls-caps); color: var(--accent); text-transform: var(--tt-caps); }
+[data-mgui] .d-title { margin: var(--s-2) 0 0; font-family: var(--font-display); font-size: var(--f-xl); font-weight: var(--w-title); letter-spacing: var(--ls-title); }
+[data-mgui] .d-x { position: absolute; top: var(--s-4); right: var(--s-4); width: 30px; height: 30px; border-radius: var(--r-sm); color: var(--text-3); display: grid; place-items: center; }
+[data-mgui] .d-x:hover { background: var(--hover); color: var(--text); }
+[data-mgui] .d-body { flex: 1; overflow-y: auto; padding: var(--s-5) var(--s-6); }
+[data-mgui] .d-sec { margin-bottom: var(--s-5); }
+[data-mgui] .d-sec > .h { font-family: var(--font-mono); font-size: var(--f-xxs); letter-spacing: var(--ls-caps); color: var(--text-3); text-transform: var(--tt-caps); margin-bottom: var(--s-3); }
+[data-mgui] .d-foot { flex: none; padding: var(--s-4) var(--s-6); border-top: 1px solid var(--line); display: flex; gap: var(--s-2); flex-wrap: wrap; }
+
+/* 字段行：只读值或可编辑输入框 */
+[data-mgui] .field { display: flex; align-items: center; gap: var(--s-3); padding: 9px 0; border-bottom: 1px solid var(--line); font-size: var(--f-sm); }
+[data-mgui] .field:last-child { border-bottom: 0; }
+[data-mgui] .field .k { width: var(--field-kw); flex: none; color: var(--text-3); font-size: var(--f-xs); }
+[data-mgui] .field .v { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: var(--f-xs); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-mgui] .field input.v { border: 0; border-bottom: 1px dashed transparent; background: none; outline: none; padding: 2px 0; }
+[data-mgui] .field input.v:focus { border-bottom-color: var(--accent); }
+[data-mgui] .field .masked { filter: blur(5px); transition: filter .18s; cursor: pointer; }
+[data-mgui] .field .masked:hover, [data-mgui] .field .masked:focus { filter: none; }
+
+/* 审计时间线 */
+[data-mgui] .audit { font-family: var(--font-mono); font-size: var(--f-xs); color: var(--text-2); }
+[data-mgui] .audit .ev { display: flex; gap: var(--s-3); padding: 7px 0; border-bottom: 1px dashed var(--line); }
+[data-mgui] .audit .ev:last-child { border-bottom: 0; }
+[data-mgui] .audit .t { color: var(--text-3); flex: none; }
+
+/* 抽屉底部操作 */
+[data-mgui] .act { height: 32px; padding: 0 13px; border-radius: var(--r-sm); font-size: var(--f-xs); font-weight: 600; border: var(--ctl-border); color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; background: var(--act-bg); }
+[data-mgui] .act:hover { color: var(--accent); border-color: var(--accent); }
+[data-mgui] .act.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+/* ---------- 图标系统：统一 24×24 线性 SVG，不再使用字符符号 ---------- */
+[data-mgui] .ic-svg { width: 18px; height: 18px; display: block; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+[data-mgui] .btn .ic-svg, [data-mgui] .act .ic-svg { width: 15px; height: 15px; }
+
+/* ---------- 机房 ROOM：模块化机柜阵列 + 值班台 ---------- */
+[data-mgui] .room-page { height: 100%; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); color: var(--text); }
+[data-mgui] .room-page .page { display: flex; flex-direction: column; overflow: hidden; padding-bottom: var(--s-5); }
+[data-mgui] .room-page .page-head { flex: none; margin-bottom: var(--s-4); }
+[data-mgui] .room-workspace { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1fr) var(--room-rail-w); gap: var(--s-4); }
+[data-mgui] .room-stage { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--panel); border: var(--card-border); border-radius: var(--r-lg); overflow: hidden; }
+[data-mgui] .room-toolbar { flex: none; min-height: 48px; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-4); border-bottom: 1px solid var(--line); }
+[data-mgui] .room-toolbar .chips { margin: 0; flex-wrap: nowrap; }
+[data-mgui] .room-toolbar .sp { flex: 1; }
+[data-mgui] .room-kpis { display: flex; align-items: center; gap: var(--s-5); font-family: var(--font-mono); }
+[data-mgui] .room-kpi { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
+[data-mgui] .room-kpi .v { font-family: var(--font-display); font-size: var(--f-xl); font-weight: var(--w-title); color: var(--text); }
+[data-mgui] .room-kpi .k { font-size: var(--f-xxs); color: var(--text-3); letter-spacing: var(--ls-caps); text-transform: var(--tt-caps); }
+[data-mgui] .room-kpi.warn .v { color: var(--warn); }
+[data-mgui] .room-canvas { flex: 1; min-height: 0; position: relative; background: var(--room-wall); overflow: hidden; }
+[data-mgui] .room-canvas > svg { display: block; width: 100%; height: 100%; }
+[data-mgui] .room-zoom { position: absolute; right: var(--s-4); bottom: var(--s-4); display: flex; gap: 2px; padding: 3px; background: var(--panel); border: var(--ctl-border); border-radius: var(--r-md); }
+[data-mgui] .room-zoom button { width: 30px; height: 28px; display: grid; place-items: center; border-radius: var(--r-sm); color: var(--text-2); }
+[data-mgui] .room-zoom button:hover { background: var(--hover); color: var(--accent); }
+[data-mgui] .room-foot { flex: none; display: flex; align-items: center; gap: var(--s-4); padding: var(--s-2) var(--s-4); border-top: 1px solid var(--line); font-family: var(--font-mono); font-size: var(--f-xxs); color: var(--text-3); }
+[data-mgui] .room-legend { display: flex; gap: var(--s-3); align-items: center; }
+[data-mgui] .room-legend span { display: inline-flex; align-items: center; gap: 5px; }
+[data-mgui] .room-legend i { width: 6px; height: 6px; border-radius: 50%; }
+
+[data-mgui] .room-rail { min-height: 0; display: flex; flex-direction: column; gap: var(--s-3); overflow-y: auto; }
+[data-mgui] .room-card { background: var(--panel); border: var(--card-border); border-radius: var(--r-lg); padding: var(--s-4); }
+[data-mgui] .room-card > .h { display: flex; align-items: center; justify-content: space-between; font-family: var(--font-mono); font-size: var(--f-xxs); letter-spacing: var(--ls-caps); text-transform: var(--tt-caps); color: var(--text-3); margin-bottom: var(--s-3); }
+[data-mgui] .room-alert { display: grid; grid-template-columns: 8px minmax(0,1fr); gap: var(--s-3); padding: var(--s-3) 0; border-top: 1px solid var(--line); }
+[data-mgui] .room-alert:first-of-type { border-top: 0; padding-top: 0; }
+[data-mgui] .room-alert:last-child { padding-bottom: 0; }
+[data-mgui] .room-alert > i { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-top: 6px; }
+[data-mgui] .room-alert.down > i { background: var(--danger); }
+[data-mgui] .room-alert .t { font-size: var(--f-sm); font-weight: 600; color: var(--text); }
+[data-mgui] .room-alert .s { font-family: var(--font-mono); font-size: var(--f-xxs); color: var(--text-3); margin-top: 3px; }
+[data-mgui] .room-event { display: flex; gap: var(--s-3); padding: 7px 0; border-top: 1px dashed var(--line); font-size: var(--f-xs); color: var(--text-2); }
+[data-mgui] .room-event:first-of-type { border-top: 0; }
+[data-mgui] .room-event .t { color: var(--text-3); font-family: var(--font-mono); flex: none; }
+[data-mgui] .room-meter { margin-top: var(--s-3); }
+[data-mgui] .room-meter .row { display: flex; justify-content: space-between; font-size: var(--f-xs); color: var(--text-2); margin-bottom: 6px; }
+[data-mgui] .room-meter .row b { font-family: var(--font-mono); color: var(--text); }
+[data-mgui] .room-meter .bar { height: 4px; background: var(--hover); border-radius: var(--r-xs); overflow: hidden; }
+[data-mgui] .room-meter .bar i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+
+/* SVG 节点：颜色只来自模板 token；项目主色属于业务数据，可由内联变量提供 */
+[data-mgui] .room-svg .room-wall { fill: var(--room-wall); }
+[data-mgui] .room-svg .room-wall-2 { fill: var(--room-wall-2); }
+[data-mgui] .room-svg .room-floor { fill: var(--room-floor); }
+[data-mgui] .room-svg .room-grid { stroke: var(--room-grid); stroke-width: 1; }
+[data-mgui] .room-svg .room-cable { fill: none; stroke: var(--room-cable); stroke-width: 2; }
+[data-mgui] .room-svg .room-cable.live { stroke: var(--ok); stroke-dasharray: 2 8; animation: room-flow 1.4s linear infinite; }
+[data-mgui] .room-svg .room-board { fill: var(--room-wall-2); stroke: var(--room-rack-edge); }
+[data-mgui] .room-svg .room-board-text { fill: var(--room-label); font-family: var(--font-mono); letter-spacing: .18em; }
+[data-mgui] .room-svg .room-shadow { fill: var(--room-shadow); }
+/* 机柜外的基础件（左侧 POWER 柜、右侧本机控制台）不在 .room-node 里，
+   要单独给屏和屏幕文字上色，否则默认黑字黑底看不见 */
+[data-mgui] .room-svg .rack-screen { fill: var(--room-screen); stroke: var(--room-rack-edge); }
+[data-mgui] .room-svg .screen-text { fill: var(--room-screen-text); font-family: var(--font-mono); }
+[data-mgui] .room-node { cursor: pointer; outline: none; }
+[data-mgui] .room-node .rack-top { fill: var(--room-rack-top); stroke: var(--room-rack-edge); }
+[data-mgui] .room-node .rack-side { fill: var(--room-rack-side); stroke: var(--room-rack-edge); }
+[data-mgui] .room-node .rack-front { fill: var(--room-rack-front); stroke: var(--room-rack-edge); }
+[data-mgui] .room-node .rack-unit { fill: var(--room-unit); stroke: var(--room-rack-edge); }
+[data-mgui] .room-node .rack-unit-on { fill: var(--room-unit-2); }
+[data-mgui] .room-node .rack-screen { fill: var(--room-screen); stroke: var(--room-rack-edge); }
+[data-mgui] .room-node .screen-text { fill: var(--room-screen-text); font-family: var(--font-mono); }
+[data-mgui] .room-node .node-name { fill: var(--room-ink); font-family: var(--font-name); font-weight: var(--w-name); }
+[data-mgui] .room-node .node-sub { fill: var(--room-label); font-family: var(--font-mono); }
+[data-mgui] .room-node .node-stripe { fill: var(--node-color); }
+[data-mgui] .room-node .link-box { fill: var(--panel); stroke: var(--room-rack-edge); }
+[data-mgui] .room-node .link-text { fill: var(--text-2); font-family: var(--font-mono); }
+[data-mgui] .room-node:hover .rack-front, [data-mgui] .room-node:focus-visible .rack-front { stroke: var(--accent); stroke-width: 1.5; }
+[data-mgui] .room-node.sel .rack-front { stroke: var(--accent); stroke-width: 2; }
+[data-mgui] .room-node.sel .node-name { fill: var(--accent); }
+[data-mgui] .room-node.idea .rack-front { stroke-dasharray: 5 4; }
+[data-mgui] .room-node.paused { opacity: .62; }
+[data-mgui] .room-node.filtered-out { opacity: .1; pointer-events: none; }
+[data-mgui] .room-node.empty .rack-front { fill: transparent; stroke: var(--room-empty); stroke-dasharray: 6 5; }
+[data-mgui] .room-node.empty .rack-top, [data-mgui] .room-node.empty .rack-side { opacity: .18; }
+/* 空机位面板是透明的（虚线框），文字落在画布上，所以用画布文字色而不是机柜亮色 */
+[data-mgui] .room-node.empty .node-name { fill: var(--room-label); font-weight: 500; }
+[data-mgui] .room-svg .status-led { filter: var(--room-led-filter); }
+[data-mgui] .room-svg .room-label { fill: var(--room-label); font-family: var(--font-mono); letter-spacing: .12em; }
+[data-mgui] .room-svg .room-spine { fill: var(--room-wall-2); stroke: var(--room-rack-edge); }
+[data-mgui] .room-svg .room-spine-unit { fill: var(--room-rack-front); stroke: var(--room-rack-edge); }
+/* 电源柜 / 本机控制台的设备单元是深色面板，文字跟机柜一致用 --room-ink */
+[data-mgui] .room-svg .room-spine-text { fill: var(--room-ink); font-family: var(--font-mono); }
+@keyframes room-flow { to { stroke-dashoffset: -20; } }
+@media (prefers-reduced-motion: reduce) { [data-mgui] .room-svg .room-cable.live { animation: none; } }
+@media (max-width: 1180px) { [data-mgui] .room-workspace { grid-template-columns: 1fr; overflow-y: auto; } [data-mgui] .room-stage { min-height: 620px; } [data-mgui] .room-rail { display: grid; grid-template-columns: repeat(2,1fr); overflow: visible; } }
+
+/* ---------- 机房场景二 · 办公室 OFFICE：项目工位 + 人物微动效 ---------- */
+[data-mgui] .office-svg .office-wall { fill: var(--office-wall); }
+[data-mgui] .office-svg .office-floor { fill: var(--office-floor); }
+[data-mgui] .office-svg .office-grid { stroke: var(--office-grid); stroke-width: 1; }
+[data-mgui] .office-svg .office-line { fill: none; stroke: var(--office-line); stroke-width: 1.5; }
+[data-mgui] .office-svg .office-whiteboard { fill: var(--office-whiteboard); stroke: var(--office-line); }
+[data-mgui] .office-svg .office-board-text { fill: var(--room-label); font-family: var(--font-mono); letter-spacing: .14em; }
+[data-mgui] .office-svg .office-shadow { fill: var(--office-shadow); }
+[data-mgui] .office-svg .office-rug { fill: var(--office-rug); stroke: var(--office-line); }
+[data-mgui] .office-node { cursor: pointer; outline: none; }
+[data-mgui] .office-node .desk-top { fill: var(--office-desk); stroke: var(--office-line); }
+[data-mgui] .office-node .desk-front { fill: var(--office-desk-edge); stroke: var(--office-line); }
+[data-mgui] .office-node .desk-stripe { fill: var(--node-color); }
+[data-mgui] .office-node .monitor { fill: var(--office-screen); stroke: var(--office-line); }
+[data-mgui] .office-node .monitor-stand, [data-mgui] .office-node .keyboard { fill: var(--office-desk-edge); stroke: var(--office-line); }
+[data-mgui] .office-node .screen-line { stroke: var(--office-screen-text); stroke-width: 2; stroke-linecap: round; }
+[data-mgui] .office-node .screen-text { fill: var(--office-screen-text); font-family: var(--font-mono); }
+[data-mgui] .office-node .node-name { fill: var(--text); font-family: var(--font-name); font-weight: var(--w-name); }
+[data-mgui] .office-node .node-sub { fill: var(--room-label); font-family: var(--font-mono); }
+[data-mgui] .office-node .chair { fill: var(--office-chair); stroke: var(--office-line); }
+[data-mgui] .office-node:hover .desk-top, [data-mgui] .office-node:focus-visible .desk-top { stroke: var(--accent); stroke-width: 2; }
+[data-mgui] .office-node.sel .desk-top { stroke: var(--accent); stroke-width: 2.5; }
+[data-mgui] .office-node.sel .node-name { fill: var(--accent); }
+[data-mgui] .office-node.paused { opacity: .62; }
+[data-mgui] .office-node.idea .desk-top { stroke-dasharray: 5 4; }
+[data-mgui] .office-node.filtered-out { opacity: .1; pointer-events: none; }
+[data-mgui] .office-node.empty .desk-top { fill: transparent; stroke-dasharray: 6 5; }
+[data-mgui] .office-node.empty .office-person { display: none; }
+[data-mgui] .office-person .head { fill: var(--office-skin); stroke: var(--office-line); }
+[data-mgui] .office-person .hair { fill: var(--office-hair); }
+[data-mgui] .office-person .body { fill: var(--office-person); stroke: var(--office-line); }
+[data-mgui] .office-person .arm { fill: none; stroke: var(--office-person); stroke-width: 5; stroke-linecap: round; transform-box: fill-box; transform-origin: top center; animation: office-type 1.8s ease-in-out infinite alternate; }
+[data-mgui] .office-person .arm.right { animation-delay: -.9s; }
+[data-mgui] .office-person .legs { fill: none; stroke: var(--office-person); stroke-width: 5; stroke-linecap: round; }
+[data-mgui] .office-person.typing .body { transform-box: fill-box; transform-origin: center bottom; animation: office-breathe 3s ease-in-out infinite; }
+[data-mgui] .office-walker .head { fill: var(--office-skin); stroke: var(--office-line); }
+[data-mgui] .office-walker .body { fill: var(--accent); stroke: var(--office-line); }
+[data-mgui] .office-walker .limb { fill: none; stroke: var(--office-person); stroke-width: 4; stroke-linecap: round; }
+[data-mgui] .office-walker .scan-ring { fill: none; stroke: var(--accent); stroke-dasharray: 3 4; animation: office-scan 2s linear infinite; }
+[data-mgui] .office-svg .office-plant { fill: var(--office-leaf); stroke: var(--office-line); }
+[data-mgui] .office-svg .office-pot { fill: var(--office-desk-edge); stroke: var(--office-line); }
+[data-mgui] .office-svg .status-led { filter: var(--room-led-filter); }
+@keyframes office-type { from { transform: rotate(-5deg); } to { transform: rotate(6deg); } }
+@keyframes office-breathe { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+@keyframes office-scan { to { stroke-dashoffset: -14; } }
+@media (prefers-reduced-motion: reduce) { [data-mgui] .office-person .arm, [data-mgui] .office-person.typing .body, [data-mgui] .office-walker .scan-ring { animation: none; } [data-mgui] .office-walker animateMotion { display: none; } }

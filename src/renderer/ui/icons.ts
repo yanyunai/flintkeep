@@ -1,0 +1,95 @@
+/**
+ * 侧栏线性 SVG 图标集（24×24 viewBox，stroke 跟随 currentColor）。
+ *
+ * 为什么自绘：黑曜/纸墨模板坚持「纯代码手绘 SVG、无图片素材」；此前侧栏用
+ * unicode 字符（▦ ✦ ⌂ ◦ …），跨平台字体渲染不一致、风格不齐，且动态导航项
+ * （OPC_PAGES）只能用 ◦ 占位。统一换成 1.7px 线性图标，颜色交给 CSS 令牌。
+ *
+ * 用法：`<i class="ic" v-html="sideIcon('runner')"></i>`
+ */
+
+function svg(body: string): string {
+  return (
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"' +
+    ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    body +
+    '</svg>'
+  );
+}
+
+export const SIDE_ICONS = {
+  /** 项目运行器：2×2 设备矩阵（原 ▦） */
+  runner: svg(
+    '<rect x="3.5" y="3.5" width="7.2" height="7.2" rx="1.4"/>' +
+      '<rect x="13.3" y="3.5" width="7.2" height="7.2" rx="1.4"/>' +
+      '<rect x="3.5" y="13.3" width="7.2" height="7.2" rx="1.4"/>' +
+      '<rect x="13.3" y="13.3" width="7.2" height="7.2" rx="1.4"/>'
+  ),
+  /** AI 助手：四角星（原 ✦） */
+  assistant: svg('<path d="M12 3.5l2.1 6.4 6.4 2.1-6.4 2.1L12 20.5l-2.1-6.4L3.5 12l6.4-2.1z"/>'),
+  /** 机房：小屋（原 ⌂） */
+  studio: svg(
+    '<path d="M4.5 11.2 12 4.5l7.5 6.7"/>' +
+      '<path d="M6.2 9.9v9a.9.9 0 0 0 .9.9h9.8a.9.9 0 0 0 .9-.9v-9"/>' +
+      '<path d="M10 19.8v-5.2h4v5.2"/>'
+  ),
+  /** 我的项目：文件夹 */
+  projects: svg(
+    '<path d="M3.5 18.7V6.4c0-.7.6-1.3 1.3-1.3h4.1l2 2.3h8.2c.8 0 1.4.6 1.4 1.3v10c0 .7-.6 1.3-1.4 1.3H4.8c-.7 0-1.3-.6-1.3-1.3z"/>'
+  ),
+  /** 收支：折线上升 + 箭头 */
+  finance: svg('<path d="M3.5 17.8l5.3-5.3 3.5 3.5 8.2-8.2"/><path d="M14.5 7.8h6v6"/>'),
+  /** 迭代任务：勾选框 */
+  tasks: svg('<rect x="4" y="4" width="16" height="16" rx="2.4"/><path d="M8.4 12.1l2.4 2.4 4.8-5"/>'),
+  /** 灵感池：灯泡 */
+  ideas: svg(
+    '<path d="M9.6 17.9h4.8"/><path d="M10.4 20.5h3.2"/>' +
+      '<path d="M12 3.5a5.9 5.9 0 0 1 3.3 10.8c-.6.5-1 1.2-1 2v.6h-4.6v-.6c0-.8-.4-1.5-1-2A5.9 5.9 0 0 1 12 3.5z"/>'
+  ),
+  /** 资产清单：保险箱（抽屉 + 提手，原 ▤） */
+  assets: svg(
+    '<rect x="3.5" y="4.2" width="17" height="4.2" rx="1"/>' +
+      '<path d="M5.2 8.4v10.5c0 .5.4.9.9.9h11.8c.5 0 .9-.4.9-.9V8.4"/><path d="M10 12.4h4"/>'
+  ),
+  /** 备忘录：铅笔（原 ✎） */
+  memo: svg('<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>'),
+  /** 资料证书：文档 + 正文行（原 ▣） */
+  docs: svg(
+    '<path d="M13.5 3.5V8H18"/>' +
+      '<path d="M18 8.2v11a1.3 1.3 0 0 1-1.3 1.3H7.3A1.3 1.3 0 0 1 6 19.2V4.8a1.3 1.3 0 0 1 1.3-1.3h6.2z"/>' +
+      '<path d="M9 12.4h6M9 15.6h6"/>'
+  ),
+  /** IP 白名单：盾 + 勾（原 ◈） */
+  whitelist: svg(
+    '<path d="M12 3.4l7 2.6v5.5c0 4.4-2.9 7.5-7 9.1-4.1-1.6-7-4.7-7-9.1V6z"/><path d="M9.2 11.9l2 2 3.6-3.8"/>'
+  ),
+  /** 模型用量：仪表盘（原 ◍） */
+  aiusage: svg('<path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16l3.8-4.6"/><circle cx="12" cy="16" r="1.1"/>'),
+  /** MCP 接入：插头（原 ◎） */
+  mcp: svg(
+    '<path d="M9 3.5V8M15 3.5V8"/><path d="M7 8h10v3.2a5 5 0 0 1-10 0z"/><path d="M12 16.2v4.3"/>'
+  ),
+  /** 审计日志：列表行（原 ☰） */
+  audit: svg('<path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M4 6.5h2M4 12h2M4 17.5h2"/>'),
+  /** 设置：滑杆调谐 */
+  settings: svg(
+    '<path d="M4 7.5h8.6M17.4 7.5H20M4 16.5h2.6M11.4 16.5H20"/>' +
+      '<circle cx="15" cy="7.5" r="2.1"/><circle cx="9" cy="16.5" r="2.1"/>'
+  ),
+  /** 深浅色切换：太阳 / 月亮（原 ☀ / ☾） */
+  sun: svg(
+    '<circle cx="12" cy="12" r="3.9"/>' +
+      '<path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5"/>'
+  ),
+  moon: svg('<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'),
+  /** 侧栏折叠 / 展开（IDE 风格品牌行小钮，原 « / »） */
+  chevL: svg('<path d="M14.5 6l-6 6 6 6"/>'),
+  chevR: svg('<path d="M9.5 6l6 6-6 6"/>'),
+} as const;
+
+export type SideIconKey = keyof typeof SIDE_ICONS;
+
+/** 取图标 SVG 字符串；未知 key 回退空串，模板里只是空占位，不抛错 */
+export function sideIcon(k: string): string {
+  return (SIDE_ICONS as Record<string, string>)[k] ?? '';
+}

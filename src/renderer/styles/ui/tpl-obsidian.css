@@ -1,0 +1,111 @@
+/* 由 scripts/build-ui-scope.mjs 生成，请勿手改。
+ * 源文件：design/system/tpl-obsidian.css
+ * 作用域：[data-mgui]（新界面根容器，携带 data-template / data-theme）
+ */
+/* ============================================================
+   模板皮肤 · 黑曜 OBSIDIAN
+   金库终端：深黑曜底 + 发丝线 + LED 信号灯 + 酸性绿点睛
+   ============================================================ */
+[data-mgui][data-template="obs"] {
+  --bg: #07080a; --panel: #0c0e11; --side-bg: rgba(255,255,255,.015); --hover: rgba(255,255,255,.04);
+  --text: #eceef0; --text-2: #9aa0a8; --text-3: #7d8492; /* #565c66 对比度仅 3:1，提亮到 ≥4.5:1（docs/19 #14） */
+  --line: rgba(255,255,255,.07); --line-2: rgba(255,255,255,.13); --line-2-strong: rgba(255,255,255,.25);
+  --accent: #c6f24e; --accent-ink: #0b0d05; --accent-soft: rgba(198,242,78,.09); --accent-glow: rgba(198,242,78,.5);
+  --warn: #ffb224; --danger: #ff5c5c; --ok: #3ddc97; --info: #5eb1ff;
+  --scrim-bg: rgba(0,0,0,.5);
+  /* 弹层阴影：App.vue 的 .ai-colpop / 居中弹窗引用，此前从未定义导致阴影静默失效（docs/19 P5） */
+  --shadow-pop: 0 24px 60px rgba(0,0,0,.45);
+
+  --font-ui: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-display: var(--font-ui);
+  --font-name: var(--font-ui);
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ls-caps: .18em; --tt-caps: uppercase; --ls-brand: 0; --w-brand: 700;
+  --ls-title: -.02em; --w-title: 700; --w-name: 600; --w-side-on: 600;
+  --f-display: 30px; --f-stat: 26px; --f-name: 13.5px;
+
+  --r-xs: 5px; --r-sm: 8px; --r-md: 11px; --r-lg: 14px;
+  --sh-card: none; --card-border: 1px solid var(--line);
+  --side-w: 212px; --side-wx: 62px; --side-item-h: 40px; --side-item-jc: flex-start;
+  --side-ic: block; --side-pg: none; --side-leader: none;
+  --side-on-bar: ''; --side-on-glow: 0 0 10px var(--accent-glow);
+  --logo-shadow: 0 0 24px rgba(198,242,78,.35);
+  --statusbar-h: 30px; --statusbar-line: 1px solid var(--line);
+  --page-pad: 28px 24px 88px;
+  /* 滚动条：深色底上默认那条白条太扎眼，统一成细的半透明条 */
+  color-scheme: dark;
+  --scrollbar: rgba(255, 255, 255, .14);
+  --scrollbar-hover: rgba(255, 255, 255, .28);
+  --ctl-h: 38px; --ctl-border: 1px solid var(--line-2);
+  --search-w: 320px;
+  --accent-btn-shadow: 0 4px 20px rgba(198,242,78,.25);
+  --chip-h: 28px; --chip-r: 7px; --chip-border: 1px solid transparent; --chip-dot: block; --chip-on-border: var(--line-2);
+  --tbl-top: 1px solid var(--line-2); --tbl-hline: 1px solid var(--line); --tbl-rline: 1px solid var(--line);
+  /* 资产清单有 60+ 行，52px 一屏只能看 12 条；46px 更贴合实际使用密度 */
+  --row-h: 46px; --due-row-bg: linear-gradient(90deg, rgba(255,178,36,.06), transparent 55%);
+  --drawer-r: 0; --drawer-border: 0 solid var(--line-2); --drawer-shadow: none;
+  --field-kw: 92px; --act-bg: transparent;
+  --room-rail-w: 300px;
+  --room-wall: #0a0d10; --room-wall-2: #0f1419; --room-floor: #0b0e12; --room-grid: rgba(255,255,255,.045);
+  --room-rack-top: #1d252d; --room-rack-front: #10151b; --room-rack-side: #171e25; --room-rack-edge: rgba(255,255,255,.14);
+  --room-unit: #1b242d; --room-unit-2: #2a3743; --room-screen: #070b0e; --room-screen-text: #c6f24e;
+  --room-label: #9aa0a8; --room-empty: rgba(255,255,255,.18); --room-shadow: rgba(0,0,0,.38); --room-cable: #2a3743;
+  /* 机柜面板上的文字：面板永远是深色，不能跟页面 --text 走（浅色主题下会变成黑底黑字） */
+  --room-ink: #e9eef2;
+  --room-led-filter: drop-shadow(0 0 3px currentColor);
+  --office-wall: #0c1116; --office-floor: #10151a; --office-grid: rgba(255,255,255,.04); --office-line: rgba(255,255,255,.18);
+  --office-desk: #25303a; --office-desk-edge: #182129; --office-chair: #1c252d; --office-screen: #071015; --office-screen-text: #5eb1ff;
+  --office-person: #60758a; --office-skin: #d3b49a; --office-hair: #25292e; --office-leaf: #285d49; --office-whiteboard: #111920;
+  --office-rug: rgba(94,177,255,.05); --office-shadow: rgba(0,0,0,.32);
+}
+[data-mgui][data-template="obs"][data-theme="light"] {
+  color-scheme: light;
+  --scrollbar: rgba(0, 0, 0, .14);
+  --scrollbar-hover: rgba(0, 0, 0, .26);
+  --bg: #f4f4f1; --panel: #ffffff; --side-bg: rgba(0,0,0,.02); --hover: rgba(0,0,0,.04);
+  --text: #17181a; --text-2: #5b5f66; --text-3: #8b9098;
+  --line: rgba(0,0,0,.08); --line-2: rgba(0,0,0,.15); --line-2-strong: rgba(0,0,0,.3);
+  --accent: #4d7c0f; --accent-ink: #ffffff; --accent-soft: rgba(101,163,13,.1); --accent-glow: rgba(101,163,13,.3);
+  --warn: #b45309; --danger: #dc2626; --ok: #15803d; --info: #2563eb;
+  --scrim-bg: rgba(30,30,20,.28);
+  --shadow-pop: 0 18px 44px rgba(25,23,19,.16);
+  --logo-shadow: none;
+  --accent-btn-shadow: none;
+  --due-row-bg: linear-gradient(90deg, rgba(180,83,9,.07), transparent 55%);
+  --room-wall: #e9ebe6; --room-wall-2: #f2f3ef; --room-floor: #e2e5df; --room-grid: rgba(0,0,0,.055);
+  --room-rack-top: #c9d0d1; --room-rack-front: #232c33; --room-rack-side: #39464e; --room-rack-edge: rgba(0,0,0,.24);
+  --room-unit: #35434d; --room-unit-2: #536570; --room-screen: #10171a; --room-screen-text: #c6f24e;
+  --room-label: #5b5f66; --room-empty: rgba(0,0,0,.24); --room-shadow: rgba(0,0,0,.18); --room-cable: #9aa69f;
+  /* 浅色主题里机柜面板仍是 #232c33 深色，文字必须用亮色 */
+  --room-ink: #f1f5f8;
+  --room-led-filter: drop-shadow(0 0 2px currentColor);
+  --office-wall: #eef0eb; --office-floor: #e5e8e1; --office-grid: rgba(0,0,0,.05); --office-line: rgba(0,0,0,.2);
+  --office-desk: #d3d9d5; --office-desk-edge: #bcc5c0; --office-chair: #aab6b2; --office-screen: #15232b; --office-screen-text: #9ed2ff;
+  --office-person: #607d91; --office-skin: #d3b49a; --office-hair: #34383b; --office-leaf: #4d8068; --office-whiteboard: #f8f9f5;
+  --office-rug: rgba(77,124,15,.05); --office-shadow: rgba(0,0,0,.14);
+}
+
+/* 网格底纹 */
+[data-template="obs"][data-mgui] {
+  background-image:
+    radial-gradient(1200px 500px at 70% -10%, rgba(198,242,78,.045), transparent 60%),
+    radial-gradient(900px 600px at 10% 110%, rgba(80,140,255,.05), transparent 60%),
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+  background-size: auto, auto, 44px 44px, 44px 44px;
+}
+[data-template="obs"][data-theme="light"][data-mgui] {
+  background-image:
+    radial-gradient(1200px 500px at 70% -10%, rgba(101,163,13,.05), transparent 60%),
+    radial-gradient(900px 600px at 10% 110%, rgba(59,130,246,.05), transparent 60%),
+    linear-gradient(rgba(0,0,0,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,.028) 1px, transparent 1px);
+}
+/* 浅色下主按钮：黑底酸绿字，保住终端气质 */
+[data-mgui][data-template="obs"][data-theme="light"] .btn.primary { background: #17181a; border-color: #17181a; color: #c6f24e; }
+[data-mgui][data-template="obs"][data-theme="light"] .side-brand .logo { background: #17181a; color: #c6f24e; }
+
+/* 抽屉：右侧滑出（新 UI 的开合类挂在 .mg-view 上，.app.open 分支永不匹配，已删） */
+[data-mgui][data-template="obs"] .drawer { top: 0; right: 0; bottom: 0; width: 460px; border-left-width: 1px; transform: translateX(102%); }
+[data-mgui][data-template="obs"] .mg-view.open .drawer { transform: none; }
+[data-mgui][data-template="obs"] .mg-view.open .scrim { opacity: 1; pointer-events: auto; }

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 燧垒 FlintKeep favicon：暗底 + 荧光绿品牌色圆角方（与 tpl-obsidian --accent 一致） -->
+  <rect width="32" height="32" rx="7" fill="#0d1117"/>
+  <rect x="1" y="1" width="30" height="30" rx="6" fill="none" stroke="#c6f24e" stroke-opacity=".55" stroke-width="1.5"/>
+  <path d="M16 7l6.5 4.2v9.6L16 25l-6.5-4.2v-9.6L16 7z" fill="none" stroke="#c6f24e" stroke-width="1.8" stroke-linejoin="round"/>
+  <circle cx="16" cy="16" r="2.4" fill="#c6f24e"/>
+</svg>

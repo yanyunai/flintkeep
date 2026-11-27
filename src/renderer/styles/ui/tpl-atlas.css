@@ -1,0 +1,116 @@
+/* 由 scripts/build-ui-scope.mjs 生成，请勿手改。
+ * 源文件：design/system/tpl-atlas.css
+ * 作用域：[data-mgui]（新界面根容器，携带 data-template / data-theme）
+ */
+/* ============================================================
+   模板皮肤 · 纸墨 ATLAS
+   编辑部档案：暖纸底 + 衬线大标题 + 双线刊头 + 目录侧栏 + 直角
+   ============================================================ */
+[data-mgui][data-template="atlas"] {
+  color-scheme: light;
+  --bg: #faf8f3; --panel: #faf8f3; --side-bg: #f3f0e8; --hover: rgba(25,23,19,.045);
+  --text: #191713; --text-2: #57534a; --text-3: #9a958a;
+  --line: #e2ded2; --line-2: #cfc9ba; --line-2-strong: #191713;
+  --scrollbar: rgba(25, 23, 19, .16); --scrollbar-hover: rgba(25, 23, 19, .3);
+  --accent: #002fa7; --accent-ink: #faf8f3; --accent-soft: rgba(0,47,167,.06); --accent-glow: none;
+  --warn: #c2372a; --danger: #c2372a; --ok: #1d6b45; --info: #315b8a;
+  --scrim-bg: rgba(25,23,19,.4);
+  /* 弹层阴影：沿用抽屉的硬边偏移阴影语言，与黑曜的扩散阴影区分（docs/19 P5） */
+  --shadow-pop: 10px 10px 0 rgba(25,23,19,.16);
+
+  --font-ui: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-display: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
+  --font-name: var(--font-display);
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ls-caps: .26em; --tt-caps: uppercase; --ls-brand: .18em; --w-brand: 700;
+  --ls-title: .12em; --w-title: 700; --w-name: 700; --w-side-on: 700;
+  --f-display: 38px; --f-stat: 44px; --f-name: 16px;
+
+  --r-xs: 0; --r-sm: 0; --r-md: 0; --r-lg: 0;
+  --sh-card: none; --card-border: 0;
+  --side-w: 236px; --side-wx: 68px; --side-item-h: 34px; --side-item-jc: flex-start;
+  --side-ic: none; --side-pg: block; --side-leader: none;
+  --side-on-bar: none; --side-on-glow: none;
+  --logo-shadow: none;
+  --statusbar-h: auto; --statusbar-line: 1px solid var(--line-2);
+  --page-pad: 26px 40px 130px;
+  --ctl-h: 34px; --ctl-border: 1px solid var(--text);
+  --search-w: 250px;
+  --accent-btn-shadow: none;
+  --chip-h: 30px; --chip-r: 0; --chip-border: 0; --chip-dot: none; --chip-on-border: transparent;
+  --tbl-top: 1px solid var(--text); --tbl-hline: 1px solid var(--text); --tbl-rline: 1px solid var(--line);
+  --row-h: 56px; --due-row-bg: transparent;
+  --drawer-r: 0; --drawer-border: 2px solid var(--text); --drawer-shadow: 10px 10px 0 rgba(25,23,19,.16);
+  --field-kw: 96px; --act-bg: transparent;
+  --room-rail-w: 300px;
+  --room-wall: #f6f2e9; --room-wall-2: #eee9dc; --room-floor: #f2eee4; --room-grid: rgba(25,23,19,.09);
+  --room-rack-top: #faf8f3; --room-rack-front: #f8f4eb; --room-rack-side: #e7e0d2; --room-rack-edge: #57534a;
+  --room-unit: #ece7da; --room-unit-2: #ded6c5; --room-screen: #f3f0e8; --room-screen-text: #002fa7;
+  --room-label: #57534a; --room-empty: rgba(25,23,19,.32); --room-shadow: rgba(25,23,19,.1); --room-cable: #9a958a;
+  /* atlas 浅色机柜是米白面板，文字用深墨色 */
+  --room-ink: #1a1712;
+  --room-led-filter: none;
+  --office-wall: #f8f5ed; --office-floor: #f3f0e8; --office-grid: rgba(25,23,19,.08); --office-line: #57534a;
+  --office-desk: #faf8f3; --office-desk-edge: #e4ded1; --office-chair: #ece7da; --office-screen: #f6f2e9; --office-screen-text: #002fa7;
+  --office-person: #d9d2c2; --office-skin: #faf8f3; --office-hair: #57534a; --office-leaf: #e1e8d9; --office-whiteboard: #faf8f3;
+  --office-rug: rgba(0,47,167,.035); --office-shadow: rgba(25,23,19,.08);
+}
+/* 墨夜（纸墨的深色） */
+[data-mgui][data-template="atlas"][data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1c1a15; --panel: #1c1a15; --side-bg: #211e17; --hover: rgba(255,255,255,.05);
+  --text: #ece7da; --text-2: #b0a994; --text-3: #8f8b74; /* #6f6a5c 对比度仅 3.2:1，提亮到 ≥4.5:1（docs/19 #14） */
+  --line: rgba(255,255,255,.09); --line-2: rgba(255,255,255,.18); --line-2-strong: #ece7da;
+  --scrollbar: rgba(236, 231, 218, .16); --scrollbar-hover: rgba(236, 231, 218, .3);
+  --accent: #7a9bff; --accent-ink: #1c1a15; --accent-soft: rgba(122,155,255,.1);
+  --warn: #ff8a7a; --danger: #ff8a7a; --ok: #79c9a5; --info: #8cb5e8;
+  --scrim-bg: rgba(0,0,0,.55);
+  --shadow-pop: 10px 10px 0 rgba(0,0,0,.4);
+  --drawer-shadow: 10px 10px 0 rgba(0,0,0,.4);
+  --room-wall: #211e17; --room-wall-2: #29251c; --room-floor: #1c1a15; --room-grid: rgba(236,231,218,.07);
+  --room-rack-top: #2c281f; --room-rack-front: #242119; --room-rack-side: #302b21; --room-rack-edge: rgba(236,231,218,.4);
+  --room-unit: #332f24; --room-unit-2: #433c2d; --room-screen: #1c1a15; --room-screen-text: #7a9bff;
+  --room-label: #b0a994; --room-empty: rgba(236,231,218,.28); --room-shadow: rgba(0,0,0,.3); --room-cable: #6f6a5c;
+  /* atlas 深色机柜是深褐面板，文字用米白 */
+  --room-ink: #ece7da;
+  --room-led-filter: none;
+  --office-wall: #242118; --office-floor: #1c1a15; --office-grid: rgba(236,231,218,.07); --office-line: rgba(236,231,218,.5);
+  --office-desk: #2c281f; --office-desk-edge: #353024; --office-chair: #29251d; --office-screen: #1c1a15; --office-screen-text: #7a9bff;
+  --office-person: #615947; --office-skin: #b0a994; --office-hair: #ece7da; --office-leaf: #39452f; --office-whiteboard: #252219;
+  --office-rug: rgba(122,155,255,.05); --office-shadow: rgba(0,0,0,.25);
+}
+
+/* 刊头：状态条变报纸双线 */
+[data-mgui][data-template="atlas"] .statusbar { padding-top: 22px; padding-bottom: 10px; border-top: 3px solid var(--text); margin-top: 20px; }
+/* 品牌区：无底色衬线字标 + 双细线 */
+[data-mgui][data-template="atlas"] .side-brand { border-bottom: 3px double var(--text); padding-bottom: var(--s-3); margin-bottom: var(--s-1); justify-content: center; }
+[data-mgui][data-template="atlas"] .side-brand .logo { background: none; box-shadow: none; color: var(--text); font-family: var(--font-display); border-radius: 0; width: auto; height: auto; font-size: 24px; }
+/* 目录项：页码 + 点线引导 */
+[data-mgui][data-template="atlas"] .side-item { border-radius: 0; }
+[data-mgui][data-template="atlas"] .shell.side-open .side-item .leader { display: block; border-bottom: 1px dotted var(--line-2); transform: translateY(-3px); }
+[data-mgui][data-template="atlas"] .side-item.on { background: none; }
+[data-mgui][data-template="atlas"] .shell:not(.side-open) .side-item.on .pg { border-bottom: 2px solid var(--accent); padding-bottom: 1px; }
+/* chips：下划线式 */
+[data-mgui][data-template="atlas"] .chip { font-family: var(--font-ui); padding: 0 2px; border-bottom: 2px solid transparent; }
+[data-mgui][data-template="atlas"] .chip:hover { background: none; color: var(--text); }
+[data-mgui][data-template="atlas"] .chip.on { background: none; border-bottom-color: var(--accent); }
+/* 统计卡：无边框大数字 + 竖分隔线 */
+[data-mgui][data-template="atlas"] .stats { gap: 0; border-bottom: 1px solid var(--line-2); }
+[data-mgui][data-template="atlas"] .stat { background: none; box-shadow: none; border-radius: 0; border-right: 1px solid var(--line); text-align: center; padding: var(--s-5) 0 var(--s-5); }
+[data-mgui][data-template="atlas"] .stat:last-child { border-right: 0; }
+/* 搜索：下划线式 */
+[data-mgui][data-template="atlas"] .search { background: none; border: 0; border-bottom: 1px solid var(--line-2); border-radius: 0; padding: 0 2px; }
+[data-mgui][data-template="atlas"] .search:focus-within { box-shadow: none; border-bottom-color: var(--accent); }
+[data-mgui][data-template="atlas"] .search kbd { display: none; }
+/* 按钮：直角印刷感 */
+[data-mgui][data-template="atlas"] .btn { background: none; letter-spacing: .12em; }
+[data-mgui][data-template="atlas"] .btn.primary { background: var(--text); border-color: var(--text); color: var(--bg); }
+[data-mgui][data-template="atlas"] .btn.primary:hover { background: var(--accent); border-color: var(--accent); }
+/* 选中行：不用底色块，用左侧蓝条 + 蓝字 */
+[data-mgui][data-template="atlas"] .t-row.sel { background: var(--hover); }
+[data-mgui][data-template="atlas"] .t-row.sel .n { color: var(--accent); }
+
+/* 抽屉：居中硬边弹窗（新 UI 的开合类挂在 .mg-view 上，.app.open 分支永不匹配，已删） */
+[data-mgui][data-template="atlas"] .drawer { left: 50%; top: 50%; width: 640px; max-height: 82vh; transform: translate(-50%,-48%); opacity: 0; pointer-events: none; }
+[data-mgui][data-template="atlas"] .mg-view.open .drawer { transform: translate(-50%,-50%); opacity: 1; pointer-events: auto; }
+[data-mgui][data-template="atlas"] .mg-view.open .scrim { opacity: 1; pointer-events: auto; }
