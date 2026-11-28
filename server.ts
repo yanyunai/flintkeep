@@ -41,7 +41,8 @@ import { AI_PROVIDER_MAP } from './src/server/ai-provider-map';
 import { sessionCookie, clearSessionCookie, sessionOk, issueSession, revokeSession } from './src/server/session';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DIST_DIR = path.join(__dirname, 'dist');
+/** 安装版里前端产物在 resources/app/dist，与编译后的后端不在同一层，允许外部指定 */
+const DIST_DIR = process.env.FK_DIST_DIR || path.join(__dirname, 'dist');
 const DATA_DIR = resolveDataDir(path.join(__dirname, 'data'));
 const PORT = Number(process.env.PORT || 8787);
 // 白名单绑定存储（只含资源 ID，不含任何密钥）
@@ -409,16 +410,22 @@ function createHttpServer(): http.Server {
 
       // MCP 教程元数据（无密钥）：解锁前后都可访问，避免旧进程/锁态误报 not found
       if (p === '/api/mcp-setup' && req.method === 'GET') {
-        const projectRoot = posixPath(__dirname);
-        // GUI 启动的 Agent 宿主（Dock/开始菜单拉起的各类桌面客户端）继承的是
-        // 精简 PATH，往往找不到 npx —— 配置模板直接给绝对 node + tsx 入口，避免连不上
+        // 安装版：后端是预编译的 build/mcp.mjs，由 Electron 二进制以纯 Node 模式拉起，
+        // 既不需要 tsx，也不要求用户机器装 Node；源码态仍走 tsx + mcp.ts。
+        const packaged = process.env.FK_PACKAGED === '1';
+        const appRoot = process.env.FK_APP_ROOT || __dirname;
+        const projectRoot = posixPath(packaged ? appRoot : __dirname);
         const tsxCli = path.join(__dirname, 'node_modules', 'tsx', 'dist', 'cli.mjs');
         return send(res, 200, {
+          mode: packaged ? 'packaged' : 'source',
           projectRoot,
-          mcpScript: posixPath(path.join(__dirname, 'src', 'core', 'mcp.ts')),
+          mcpScript: posixPath(
+            packaged ? path.join(appRoot, 'build', 'mcp.mjs') : path.join(__dirname, 'src', 'core', 'mcp.ts')
+          ),
           dataDir: posixPath(DATA_DIR),
           nodeBin: posixPath(process.execPath),
-          tsxCli: fs.existsSync(tsxCli) ? posixPath(tsxCli) : null,
+          tsxCli: packaged ? null : fs.existsSync(tsxCli) ? posixPath(tsxCli) : null,
+          envExtra: packaged ? { ELECTRON_RUN_AS_NODE: '1' } : {},
           tools: MCP_TOOL_GUIDE,
         });
       }

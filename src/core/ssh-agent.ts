@@ -1,10 +1,13 @@
 /**
  * 本地 SSH agent（ssh-agent 协议子集）。
  *
- * 目标：把保险库里的 SSH 私钥做成标准 agent，用户只要
- *   export SSH_AUTH_SOCK=<dataDir>/agent.sock
- * 之后 `ssh` / `git` / `scp` / `rsync` 就直接可用——私钥不出本进程，
- * 也不会被写进 ~/.ssh 或 Agent 的上下文。
+ * 目标：把保险库里的 SSH 私钥做成标准 agent，之后 `ssh` / `git` / `scp` / `rsync`
+ * 就直接可用——私钥不出本进程，也不会被写进 ~/.ssh 或 Agent 的上下文。
+ *
+ * 接入方式按平台不同：
+ * - macOS / Linux：export SSH_AUTH_SOCK=<dataDir>/agent.sock（Unix domain socket）
+ * - Windows：命名管道 \\.\pipe\flintkeep-agent-<用户名>，在 ssh_config 里写
+ *   `IdentityAgent //./pipe/flintkeep-agent-<用户名>`（Win32-OpenSSH 不读 SSH_AUTH_SOCK）
  *
  * 实现范围（够用且最小）：
  * - SSH_AGENTC_REQUEST_IDENTITIES → 列出 ssh_key 资产里的私钥（comment = 资产名）
@@ -19,6 +22,7 @@
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as net from 'net';
+import * as os from 'os';
 import * as path from 'path';
 import ssh2 from 'ssh2';
 import type { Vault } from './vault';
@@ -38,6 +42,52 @@ const RSA_SHA2_512 = 4;
 const MAX_FRAME = 256 * 1024;
 /** Unix socket 路径上限（macOS 104 / Linux 108），留些余量 */
 const MAX_SOCKET_PATH = 100;
+
+// ===== Windows 命名管道 =====
+/**
+ * Windows 没有 Unix domain socket，同等的本地进程间通道是命名管道。
+ * 本 agent 在 Windows 上监听 `\\.\pipe\flintkeep-agent-<用户名>`，
+ * 客户端用 ssh_config 的 `IdentityAgent` 指过来（Win32-OpenSSH 不认 SSH_AUTH_SOCK）。
+ */
+const IS_WIN = process.platform === 'win32';
+const WIN_PIPE_PREFIX = '\\\\.\\pipe\\';
+/** Win32-OpenSSH 自带的 agent 管道名；接管模式会占用它 */
+export const WIN_SYSTEM_AGENT_PIPE = `${WIN_PIPE_PREFIX}openssh-ssh-agent`;
+
+/** 管道名里放用户名：同一台机器多用户各用各的，不会互相抢 */
+function userSlug(): string {
+  try {
+    return (os.userInfo().username || 'user').toLowerCase().replace(/[^a-z0-9._-]+/g, '-').slice(0, 24) || 'user';
+  } catch {
+    return 'user';
+  }
+}
+
+/**
+ * 计算 agent 的监听端点。
+ *
+ * - POSIX：`<dataDir>/agent.sock`（可被 --socket 覆盖，走 path.resolve）
+ * - Windows：命名管道；显式传入 `\\.\pipe\...` 才采用，传文件路径会忽略；
+ *   takeoverSystemAgent=true 时占用系统管道 `\\.\pipe\openssh-ssh-agent`
+ */
+export function agentEndpoint(opts: {
+  dataDir: string;
+  socketPath?: string;
+  takeoverSystemAgent?: boolean;
+}): string {
+  if (!IS_WIN) return path.resolve(opts.socketPath || path.join(opts.dataDir, 'agent.sock'));
+  const custom = opts.socketPath && opts.socketPath.startsWith(WIN_PIPE_PREFIX) ? opts.socketPath : '';
+  if (custom) return custom;
+  if (opts.takeoverSystemAgent) return WIN_SYSTEM_AGENT_PIPE;
+  return `${WIN_PIPE_PREFIX}flintkeep-agent-${userSlug()}`;
+}
+
+/** 展示用的 ssh_config 写法：`//./pipe/xxx`（Windows 路径里的反斜杠在 config 中要转义，正斜杠更稳） */
+export function pipeToSshConfig(endpoint: string): string {
+  return endpoint.startsWith(WIN_PIPE_PREFIX)
+    ? `//./pipe/${endpoint.slice(WIN_PIPE_PREFIX.length)}`
+    : endpoint;
+}
 
 // ===== 线格式工具 =====
 function u32(n: number): Buffer {
@@ -113,13 +163,16 @@ export class SshAgent {
     private opts: {
       dataDir: string;
       socketPath?: string;
+      /** Windows：占用系统 agent 管道（\\.\pipe\openssh-ssh-agent），让 ssh 零配置直接用 */
+      takeoverSystemAgent?: boolean;
       /** 返回拒绝原因则本次请求失败（锁屏策略）；null 放行 */
       guard?: () => string | null;
     }
   ) {}
 
+  /** 监听端点：POSIX 是 socket 文件，Windows 是命名管道（见 agentEndpoint） */
   get socketPath(): string {
-    return this.opts.socketPath || path.join(this.opts.dataDir, 'agent.sock');
+    return agentEndpoint(this.opts);
   }
 
   get listening(): boolean {
@@ -141,6 +194,16 @@ export class SshAgent {
 
   private async doListen(): Promise<void> {
     const sock = this.socketPath;
+
+    // ---- Windows：命名管道 ----
+    // 管道没有「文件」，不能 unlink 清理；能不能连上就是唯一的存活判据。
+    if (IS_WIN) {
+      if (await canConnect(sock)) throw new Error(`SSH agent 已在运行：${sock}`);
+      await this.listenOn(sock);
+      return;
+    }
+
+    // ---- POSIX：Unix domain socket（原逻辑保持不变）----
     if (sock.length > MAX_SOCKET_PATH) {
       throw new Error(`socket 路径过长（${sock.length} > ${MAX_SOCKET_PATH}）：请用 --socket 指定更短的路径`);
     }
@@ -150,6 +213,18 @@ export class SshAgent {
       fs.unlinkSync(sock);
     }
 
+    await this.listenOn(sock);
+
+    try {
+      fs.chmodSync(sock, 0o600);
+    } catch {
+      /* 权限收紧失败不影响可用性，但下面的告警值得记录 */
+      console.warn(`[ssh-agent] 无法把 ${sock} 权限设为 0600`);
+    }
+  }
+
+  /** 在给定端点上开监听（socket 路径或命名管道都由 net.listen 处理） */
+  private async listenOn(ep: string): Promise<void> {
     const srv = net.createServer((conn) => this.handle(conn));
     this.server = srv;
     await new Promise<void>((resolve, reject) => {
@@ -163,23 +238,18 @@ export class SshAgent {
       };
       srv.once('error', onErr);
       srv.once('listening', onOk);
-      srv.listen(sock);
+      srv.listen(ep);
     });
-    try {
-      fs.chmodSync(sock, 0o600);
-    } catch {
-      /* 权限收紧失败不影响可用性，但下面的告警值得记录 */
-      console.warn(`[ssh-agent] 无法把 ${sock} 权限设为 0600`);
-    }
     srv.on('error', (e) => console.warn(`[ssh-agent] ${e.message}`));
   }
 
-  /** 停止监听并清理 socket 文件 */
+  /** 停止监听并清理 socket 文件（Windows 管道随进程关闭自动消失） */
   async close(): Promise<void> {
     const srv = this.server;
     this.server = null;
     this.cache.clear();
     if (srv) await new Promise<void>((resolve) => srv.close(() => resolve()));
+    if (IS_WIN) return;
     try {
       if (fs.existsSync(this.socketPath)) fs.unlinkSync(this.socketPath);
     } catch {

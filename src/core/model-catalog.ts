@@ -9,10 +9,10 @@
  * 数据源约定：目录价是标价参考；促销以各控制台为准。
  */
 import { spawn } from 'child_process';
-import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { t } from '../shared/i18n';
+import { cliAvailable, cliLaunch } from './cli-bin';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -321,21 +321,14 @@ export function applyCatalogPrices<
 
 // ==================== 百炼 CLI 目录 ====================
 
-function blBin(): string {
-  const root = path.join(__dirname, '..', '..');
-  const isWin = process.platform === 'win32';
-  return path.join(root, 'node_modules', '.bin', isWin ? 'bl.cmd' : 'bl');
-}
-
 function runBl(args: string[], timeoutMs: number): Promise<{ code: number | null; stdout: string; stderr: string }> {
-  const bin = blBin();
-  const cwd = path.join(__dirname, '..', '..');
+  const l = cliLaunch('bl');
   return new Promise((resolve, reject) => {
-    const p = spawn(bin, args, {
-      cwd,
+    const p = spawn(l.cmd, [...l.prefixArgs, ...args], {
+      cwd: l.cwd,
       windowsHide: true,
-      shell: process.platform === 'win32',
-      env: { ...process.env },
+      shell: l.shell,
+      env: { ...process.env, ...l.env },
     });
     let stdout = '';
     let stderr = '';
@@ -370,7 +363,7 @@ async function execBlJson<T>(args: string[], timeoutMs = 120000): Promise<T> {
 
 /** 分页拉全量家族价目（No Auth；page-size 过大时 CLI 会空结果，固定 50） */
 export async function fetchBailianCatalog(): Promise<{ models: CatalogModel[]; total: number; source: string }> {
-  if (!fs.existsSync(blBin())) {
+  if (!cliAvailable('bl')) {
     throw new Error('未安装百炼 CLI（bailian-cli）');
   }
   const pageSize = 50;

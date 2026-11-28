@@ -159,10 +159,32 @@ npm run start:electron
 
 > 首次安装 Electron 二进制较慢时，可设环境变量  
 > `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/` 后再 `npm i`。  
-> 安装包分发（electron-builder）尚未接入，见 `docs/06` Phase B 后续。
 >
 > 端口 `8787` 若被其它程序占用：换端口 `set PORT=8799 && npm run desktop`；  
 > 想在别的终端同时保留 `npm run dev`：`set KEEP_EXISTING_BACKEND=1`。
+
+### 打 Windows 安装包
+
+```powershell
+npm run dist:win   # 前端 → dist/、后端 → build/、electron-builder → release/
+```
+
+产物 `release/FlintKeep-<version>-setup.exe`（NSIS，按用户安装，不需要管理员权限）。
+安装包里已经处理好三件事：后端/MCP/CLI 全部预编译成 JS 并用 Electron 自带的 Node 运行（目标机不需要 Node）、
+内置 `bl` / `arkcli` / `thcli` 三个云 CLI（安装版也能查模型用量）、安装根目录带一个 `fk.cmd`（等价于源码态的 `fk`）。
+
+### Windows 上的 SSH agent
+
+Windows 没有 Unix domain socket，agent 监听命名管道 `\\.\pipe\flintkeep-agent-<用户名>`。
+在 `%USERPROFILE%\.ssh\config` 里加两行即可让 `ssh` / `git` 用上保险库里的密钥（Win32-OpenSSH 不读 `SSH_AUTH_SOCK`）：
+
+```
+Host *
+  IdentityAgent //./pipe/flintkeep-agent-<用户名>
+```
+
+`fk agent env` 会直接打印这两行；想零配置接管系统 agent 管道，用 `fk agent run --takeover`
+（前提是系统 `ssh-agent` 服务保持停止）。macOS / Linux 仍是原来的 `SSH_AUTH_SOCK=<dataDir>/agent.sock`，行为不变。
 
 ## IP 白名单
 

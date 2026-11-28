@@ -23,3 +23,10 @@ runs/
 # 设计原型只允许提交假数据（docs / 截图样例）。
 # 若要用真实保险库数据做原型，请把快照放到仓库外，不要临时改这里。
 # design/prototype/*.json
+
+# 打包产物
+release/
+build/
+
+# CLI 运行时锁文件
+.arkcli-update-execution-*.lock

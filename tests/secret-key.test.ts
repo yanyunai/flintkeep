@@ -42,7 +42,10 @@ describe('启用与解锁', () => {
     expect(r.fingerprint.length).toBe(8);
     expect(v.secretKeyStatus().enabled).toBe(true);
     expect(fs.existsSync(path.join(dir, 'secret_key.txt'))).toBe(true);
-    expect(fs.statSync(path.join(dir, 'secret_key.txt')).mode & 0o777).toBe(0o600);
+    // 0600 是 POSIX 的数字权限；Windows 用 ACL，不能用 mode 断言
+    if (process.platform !== 'win32') {
+      expect(fs.statSync(path.join(dir, 'secret_key.txt')).mode & 0o777).toBe(0o600);
+    }
     // 数据仍在：启用过程是整库重加密，不是重建
     expect(v.list().length).toBe(1);
   });

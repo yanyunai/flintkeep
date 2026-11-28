@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import { cliAvailable, cliDisplay, cliLaunch, quoteBin } from './cli-bin';
 import {
   normalizePriceEntries,
   summarizePrices,
@@ -81,21 +82,17 @@ function thHome(): string {
 }
 
 export function thBin(): string {
-  const root = path.join(__dirname, '..', '..');
-  const isWin = process.platform === 'win32';
-  return path.join(root, 'node_modules', '.bin', isWin ? 'thcli.cmd' : 'thcli');
+  return cliDisplay('th');
 }
 
 /** 给界面用的可复制路径（勿重复拼命令） */
 export function thBinPath(): string {
-  const bin = thBin();
-  return /[\s"']/.test(bin) ? JSON.stringify(bin) : bin;
+  return quoteBin(thBin());
 }
 
 /** 是否已安装 CLI（登录与否另查 auth status；未登录时页面给登录命令） */
 export function thcliAvailable(): { ok: boolean; reason?: string } {
-  const bin = thBin();
-  if (!fs.existsSync(bin)) {
+  if (!cliAvailable('th')) {
     return { ok: false, reason: '未安装 TokenHub CLI（tencent-tokenhub-cli）' };
   }
   return { ok: true };
@@ -127,14 +124,13 @@ export type ThcliIdentity = {
 };
 
 function runThcli(args: string[], timeoutMs: number): Promise<{ code: number | null; stdout: string; stderr: string }> {
-  const bin = thBin();
-  const cwd = path.join(__dirname, '..', '..');
+  const l = cliLaunch('th');
   return new Promise((resolve, reject) => {
-    const p = spawn(bin, args, {
-      cwd,
+    const p = spawn(l.cmd, [...l.prefixArgs, ...args], {
+      cwd: l.cwd,
       windowsHide: true,
-      shell: process.platform === 'win32',
-      env: { ...process.env },
+      shell: l.shell,
+      env: { ...process.env, ...l.env },
     });
     let stdout = '';
     let stderr = '';

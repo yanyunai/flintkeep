@@ -26,6 +26,8 @@
     "dev:server": "tsx server.ts",
     "dev": "concurrently -k -n ui,api \"vite\" \"tsx server.ts\"",
     "build": "vite build",
+    "build:backend": "node scripts/build-backend.mjs",
+    "dist:win": "npm run build && npm run build:backend && electron-builder --win nsis --x64",
     "desktop": "node scripts/start-desktop.mjs",
     "desktop:dev": "concurrently -k -n ui,app \"vite\" \"wait-on tcp:8790 && cross-env VITE_DEV=1 node scripts/start-desktop.mjs\"",
     "dev:electron": "npm run desktop:dev",
@@ -42,16 +44,15 @@
     "@types/ssh2": "^1.15.6",
     "@vitejs/plugin-vue": "^5.1.0",
     "@vitest/coverage-v8": "^2.1.9",
-    "@volcengine/ark-cli": "^1.0.43",
-    "bailian-cli": "^2.7.2",
     "concurrently": "^9.0.0",
     "cross-env": "^10.1.0",
     "electron": "^44.9.3",
+    "electron-builder": "^26.18.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9.39.4",
     "eslint-plugin-vue": "^9.33.0",
     "prettier": "^3.10.1",
     "puppeteer-core": "^25.18.1",
-    "tencent-tokenhub-cli": "^1.0.1",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.74.0",
@@ -63,8 +64,55 @@
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.85",
+    "@volcengine/ark-cli": "^1.0.43",
     "ai": "^7.0.163",
+    "bailian-cli": "^2.7.2",
     "ssh2": "^1.17.0",
+    "tencent-tokenhub-cli": "^1.0.1",
     "zod": "^4.6.7"
+  },
+  "build": {
+    "appId": "com.yanyun.flintkeep",
+    "productName": "FlintKeep",
+    "copyright": "Copyright © 2026 yanyun",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "build/**/*",
+      "package.json"
+    ],
+    "extraFiles": [
+      {
+        "from": "packaging/fk.cmd",
+        "to": "fk.cmd"
+      }
+    ],
+    "asar": false,
+    "npmRebuild": false,
+    "publish": null,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/app-icon.png",
+      "artifactName": "FlintKeep-${version}-setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FlintKeep 燧垒",
+      "deleteAppDataOnUninstall": false
+    }
   }
 }

@@ -50,6 +50,19 @@ function toolDesc(t: any): string {
  */
 const stdioSpec = computed(() => {
   if (!setup.value?.mcpScript) return null;
+  // 安装版：后端已编译成 mcp.mjs，直接用 Electron 二进制按纯 Node 模式跑（ELECTRON_RUN_AS_NODE），
+  // 不需要 tsx，也不需要用户机器上有 Node。
+  if (setup.value.mode === 'packaged') {
+    return {
+      command: setup.value.nodeBin,
+      args: [setup.value.mcpScript],
+      env: {
+        ...(setup.value.envExtra || {}),
+        VAULT_DATA_DIR: setup.value.dataDir,
+        VAULT_PASSPHRASE: passValue.value,
+      },
+    };
+  }
   const guiSafe = setup.value.nodeBin && setup.value.tsxCli;
   return {
     command: guiSafe ? setup.value.nodeBin : 'npx',

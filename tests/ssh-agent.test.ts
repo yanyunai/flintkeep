@@ -20,7 +20,11 @@ import { PP, cleanup, tmpDir } from './helpers';
  */
 const DATA_DIR = tmpDir('fk-agent-');
 const KEY_DIR = tmpDir('fk-agent-key-');
-const SOCKET = path.join(DATA_DIR, 'agent.sock');
+/** Windows 没有 Unix socket：用命名管道，且路径/权限断言不适用 */
+const IS_WIN = process.platform === 'win32';
+const pipeFor = (name: string) => `\\\\.\\pipe\\fk-agent-test-${process.pid}-${name}`;
+const SOCKET = IS_WIN ? pipeFor('main') : path.join(DATA_DIR, 'agent.sock');
+const DENIED = IS_WIN ? pipeFor('denied') : path.join(DATA_DIR, 'denied.sock');
 
 let agent: SshAgent;
 let pubKey: crypto.KeyObject;
@@ -119,11 +123,17 @@ afterAll(async () => {
 });
 
 describe('密钥视图', () => {
-  it('listen 后 socket 存在且权限为 0600', async () => {
+  it('listen 后可用（POSIX 额外校验 socket 文件与 0600）', async () => {
     await agent.listen();
     expect(agent.listening).toBe(true);
-    expect(fs.existsSync(SOCKET)).toBe(true);
-    expect(fs.statSync(SOCKET).mode & 0o777).toBe(0o600);
+    if (!IS_WIN) {
+      expect(fs.existsSync(SOCKET)).toBe(true);
+      expect(fs.statSync(SOCKET).mode & 0o777).toBe(0o600);
+    } else {
+      // Windows 命名管道没有文件与数字权限，能连上、能取到密钥视图即可
+      const r = await queryAgent(SOCKET);
+      expect(r.keys.length).toBe(1);
+    }
   });
 
   it('keys() 给出名称、算法与 SHA256 指纹（不含私钥）', () => {
@@ -183,7 +193,7 @@ describe('协议：身份与签名', () => {
 describe('锁屏策略', () => {
   it('guard 拒绝时签名失败、身份列表仍可用，并写 agent_sign_denied', async () => {
     const v = new Vault(DATA_DIR, PP);
-    const denied = new SshAgent(v, { dataDir: DATA_DIR, socketPath: path.join(DATA_DIR, 'denied.sock'), guard: () => '保险库已锁定' });
+    const denied = new SshAgent(v, { dataDir: DATA_DIR, socketPath: DENIED, guard: () => '保险库已锁定' });
     await denied.listen();
     try {
       const ids = await call(denied.socketPath, frame(MSG.REQUEST_IDENTITIES, Buffer.alloc(0)));
@@ -206,14 +216,16 @@ describe('生命周期', () => {
   });
 
   it('socket 路径过长时明确报错', async () => {
+    if (IS_WIN) return; // 命名管道没有 macOS/Linux 那条 100 字符限制
     const long = path.join(DATA_DIR, 'x'.repeat(120) + '.sock');
     const a = new SshAgent(new Vault(DATA_DIR, PP), { dataDir: DATA_DIR, socketPath: long });
     await expectReject(() => a.listen(), /路径过长/);
   });
 
-  it('close 后停止监听并清理 socket 文件', async () => {
+  it('close 后停止监听并清理（POSIX 还要删掉 socket 文件）', async () => {
     await agent.close();
     expect(agent.listening).toBe(false);
-    expect(fs.existsSync(SOCKET)).toBe(false);
+    if (!IS_WIN) expect(fs.existsSync(SOCKET)).toBe(false);
+    else await expectReject(() => queryAgent(SOCKET), /./); // 管道关闭后连不上
   });
 });
