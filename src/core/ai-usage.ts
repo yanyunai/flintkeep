@@ -18,6 +18,7 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { aliyunRpcCall } from './whitelist';
 import { withFileLock } from './file-lock';
+import { cliAvailable, cliDisplay, cliLaunch, quoteBin } from './cli-bin';
 import {
   applyCatalogPrices,
   appendCatalogHistory,
@@ -352,21 +353,17 @@ export function inferResetRule(q: { type?: string; expires?: string | null; expi
 }
 
 function blBin(): string {
-  const root = path.join(__dirname, '..', '..');
-  const isWin = process.platform === 'win32';
-  return path.join(root, 'node_modules', '.bin', isWin ? 'bl.cmd' : 'bl');
+  return cliDisplay('bl');
 }
 
 /** bl 不在用户 PATH 里（装在项目 node_modules/.bin）——给界面二进制完整路径，参数由界面拼（勿重复拼命令） */
 export function blBinPath(): string {
-  const bin = blBin();
-  return /[\s"']/.test(bin) ? JSON.stringify(bin) : bin;
+  return quoteBin(blBin());
 }
 
 /** 百炼 CLI 是否可用（装了且已鉴权） */
 export function bailianCliAvailable(): { ok: boolean; reason?: string } {
-  const bin = blBin();
-  if (!fs.existsSync(bin)) return { ok: false, reason: '未安装百炼 CLI（bailian-cli）' };
+  if (!cliAvailable('bl')) return { ok: false, reason: '未安装百炼 CLI（bailian-cli）' };
   const cfg = path.join(process.env.HOME || process.env.USERPROFILE || '', '.bailian', 'config.json');
   if (!fs.existsSync(cfg)) return { ok: false, reason: '百炼 CLI 未登录（需 bl auth login --console）' };
   return { ok: true };
@@ -556,14 +553,13 @@ function runBailian(
   args: string[],
   timeoutMs: number
 ): Promise<{ code: number | null; stdout: string; stderr: string }> {
-  const bin = blBin();
-  const cwd = path.join(__dirname, '..', '..');
+  const l = cliLaunch('bl');
   return new Promise((resolve, reject) => {
-    const p = spawn(bin, args, {
-      cwd,
+    const p = spawn(l.cmd, [...l.prefixArgs, ...args], {
+      cwd: l.cwd,
       windowsHide: true,
-      shell: process.platform === 'win32',
-      env: { ...process.env },
+      shell: l.shell,
+      env: { ...process.env, ...l.env },
     });
     let stdout = '';
     let stderr = '';

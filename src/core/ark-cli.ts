@@ -11,6 +11,7 @@ import * as path from 'path';
 import { t } from '../shared/i18n';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import { cliAvailable, cliDisplay, cliLaunch, quoteBin } from './cli-bin';
 import {
   normalizePriceEntries,
   summarizePrices,
@@ -77,18 +78,15 @@ function arkHome(): string {
 }
 
 export function arkBin(): string {
-  const root = path.join(__dirname, '..', '..');
-  const isWin = process.platform === 'win32';
-  return path.join(root, 'node_modules', '.bin', isWin ? 'arkcli.cmd' : 'arkcli');
+  return cliDisplay('ark');
 }
 
 export function arkBinPath(): string {
-  const bin = arkBin();
-  return /[\s"']/.test(bin) ? JSON.stringify(bin) : bin;
+  return quoteBin(arkBin());
 }
 
 export function arkcliAvailable(): { ok: boolean; reason?: string } {
-  if (!fs.existsSync(arkBin())) {
+  if (!cliAvailable('ark')) {
     return { ok: false, reason: '未安装 Ark CLI（@volcengine/ark-cli）' };
   }
   return { ok: true };
@@ -106,14 +104,13 @@ function runArkcli(
   args: string[],
   timeoutMs: number
 ): Promise<{ code: number | null; stdout: string; stderr: string }> {
-  const bin = arkBin();
-  const cwd = path.join(__dirname, '..', '..');
+  const l = cliLaunch('ark');
   return new Promise((resolve, reject) => {
-    const p = spawn(bin, args, {
-      cwd,
+    const p = spawn(l.cmd, [...l.prefixArgs, ...args], {
+      cwd: l.cwd,
       windowsHide: true,
-      shell: process.platform === 'win32',
-      env: { ...process.env },
+      shell: l.shell,
+      env: { ...process.env, ...l.env },
     });
     let stdout = '';
     let stderr = '';
