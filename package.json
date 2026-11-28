@@ -26,6 +26,8 @@
     "dev:server": "tsx server.ts",
     "dev": "concurrently -k -n ui,api \"vite\" \"tsx server.ts\"",
     "build": "vite build",
+    "build:backend": "node scripts/build-backend.mjs",
+    "dist:win": "npm run build && npm run build:backend && electron-builder --win nsis --x64",
     "desktop": "node scripts/start-desktop.mjs",
     "desktop:dev": "concurrently -k -n ui,app \"vite\" \"wait-on tcp:8790 && cross-env VITE_DEV=1 node scripts/start-desktop.mjs\"",
     "dev:electron": "npm run desktop:dev",
@@ -47,6 +49,8 @@
     "concurrently": "^9.0.0",
     "cross-env": "^10.1.0",
     "electron": "^44.9.3",
+    "electron-builder": "^26.18.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9.39.4",
     "eslint-plugin-vue": "^9.33.0",
     "prettier": "^3.10.1",
@@ -66,5 +70,43 @@
     "ai": "^7.0.163",
     "ssh2": "^1.17.0",
     "zod": "^4.6.7"
+  },
+  "build": {
+    "appId": "com.yanyun.flintkeep",
+    "productName": "FlintKeep",
+    "copyright": "Copyright © 2026 yanyun",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "build/**/*",
+      "package.json"
+    ],
+    "asar": false,
+    "npmRebuild": false,
+    "publish": null,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/app-icon.png",
+      "artifactName": "FlintKeep-${version}-setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FlintKeep 燧垒",
+      "deleteAppDataOnUninstall": false
+    }
   }
 }

@@ -190,28 +190,66 @@ function waitPort(port, host = '127.0.0.1', timeoutMs = 60000) {
 }
 
 /**
- * 启动后端：独立 tsx 子进程，避免污染主进程的模块解析。
+ * 安装版标志：源码态有 server.ts，安装包里没有（后端是预编译的 build/server.mjs）。
+ * 显式 FK_PACKAGED=1 优先，便于打包后手动验证。
+ */
+const PACKAGED = process.env.FK_PACKAGED === '1' || !fs.existsSync(path.join(root, 'server.ts'));
+
+/** 安装版的数据目录：跟着用户走，不能落在 Program Files（那里没有写权限） */
+const DATA_DIR = path.join(app.getPath('userData'), 'data');
+if (PACKAGED) process.env.DATA_DIR = process.env.DATA_DIR || DATA_DIR;
+
+/**
+ * 启动后端：独立子进程，避免污染主进程的模块解析。
+ *
+ * - 源码态：npx tsx server.ts（开发机上有 node/npx/tsx）
+ * - 安装版：用 Electron 自带的 Node（ELECTRON_RUN_AS_NODE=1）直接跑预编译的
+ *   build/server.mjs —— 安装包不依赖用户机器装 Node，也不再经过 cmd.exe。
  *
  * 不再用 shell:true：那会让参数经过一次 shell 解释，路径里有空格/特殊字符时容易被二次解析。
- * POSIX 直接 spawn npx；Windows 没有可执行的 npx（只有 npx.cmd），所以显式交给 cmd.exe，
- * 但仍然传 argv 数组，不做字符串拼接。
+ * Windows 没有可执行的 npx（只有 npx.cmd），所以显式交给 cmd.exe，但仍然传 argv 数组。
  */
 function startServer() {
   const isWin = process.platform === 'win32';
-  const child = isWin
-    ? spawn(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'npx', 'tsx', 'server.ts'], {
-        cwd: root,
-        env: { ...process.env, PORT: String(PORT) },
-        stdio: ['ignore', 'pipe', 'pipe'],
-        windowsHide: true,
-      })
-    : spawn('npx', ['tsx', 'server.ts'], {
-        cwd: root,
-        env: { ...process.env, PORT: String(PORT) },
-        stdio: ['ignore', 'pipe', 'pipe'],
-        windowsHide: true,
-      });
-  serverProc = child;
+  const baseEnv = {
+    ...process.env,
+    PORT: String(PORT),
+  };
+  const env = PACKAGED
+    ? {
+        ...baseEnv,
+        VAULT_DATA_DIR: DATA_DIR,
+        DATA_DIR,
+        FK_PACKAGED: '1',
+        FK_APP_ROOT: root,
+        FK_DIST_DIR: path.join(root, 'dist'),
+      }
+    : baseEnv;
+
+  if (PACKAGED) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    serverProc = spawn(process.execPath, [path.join(root, 'build', 'server.mjs')], {
+      cwd: root,
+      env: { ...env, ELECTRON_RUN_AS_NODE: '1' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+  } else {
+    serverProc = isWin
+      ? spawn(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'npx', 'tsx', 'server.ts'], {
+          cwd: root,
+          env,
+          stdio: ['ignore', 'pipe', 'pipe'],
+          windowsHide: true,
+        })
+      : spawn('npx', ['tsx', 'server.ts'], {
+          cwd: root,
+          env,
+          stdio: ['ignore', 'pipe', 'pipe'],
+          windowsHide: true,
+        });
+  }
+  const child = serverProc;
   const tag = (buf) => String(buf).replace(/\s+$/, '');
   serverProc.stdout?.on('data', (d) => console.log(`[api] ${tag(d)}`));
   serverProc.stderr?.on('data', (d) => console.error(`[api] ${tag(d)}`));
