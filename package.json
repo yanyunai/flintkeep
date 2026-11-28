@@ -84,6 +84,12 @@
       "build/**/*",
       "package.json"
     ],
+    "extraFiles": [
+      {
+        "from": "packaging/fk.cmd",
+        "to": "fk.cmd"
+      }
+    ],
     "asar": false,
     "npmRebuild": false,
     "publish": null,

@@ -55,4 +55,11 @@ await esbuild.build({
   outfile: path.join(outdir, 'mcp.mjs'),
 });
 
-console.log('[build-backend] 完成：build/server.mjs、build/mcp.mjs');
+// 安装版也要能用 `fk` 命令行（SSH agent、模板注入、手动查资产），同样依赖 Electron 自带的 Node
+await esbuild.build({
+  ...common,
+  entryPoints: [path.join(root, 'src', 'core', 'cli.ts')],
+  outfile: path.join(outdir, 'fk.mjs'),
+});
+
+console.log('[build-backend] 完成：build/server.mjs、build/mcp.mjs、build/fk.mjs');

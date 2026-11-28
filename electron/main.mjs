@@ -249,7 +249,6 @@ function startServer() {
           windowsHide: true,
         });
   }
-  const child = serverProc;
   const tag = (buf) => String(buf).replace(/\s+$/, '');
   serverProc.stdout?.on('data', (d) => console.log(`[api] ${tag(d)}`));
   serverProc.stderr?.on('data', (d) => console.error(`[api] ${tag(d)}`));

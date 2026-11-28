@@ -11,7 +11,7 @@ import pluginVue from 'eslint-plugin-vue';
  */
 export default [
   {
-    ignores: ['dist/**', 'build/**', 'node_modules/**', 'data/**', '.zwork-tmp/**', 'landing/**', 'design/**'],
+    ignores: ['dist/**', 'build/**', 'release/**', 'node_modules/**', 'data/**', '.zwork-tmp/**', 'landing/**', 'design/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

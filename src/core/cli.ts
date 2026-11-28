@@ -7,7 +7,7 @@ import { AssetTypeStore } from './asset-types';
 import { resolveSecretKeySource } from './secret-key';
 import { normalizeAssetType } from './mcp-meta';
 import { AccessTokenStore, findAssetTarget, type TokenCap } from './access-token';
-import { SshAgent, queryAgent } from './ssh-agent';
+import { SshAgent, queryAgent, agentEndpoint, pipeToSshConfig } from './ssh-agent';
 import { SettingsStore } from './settings';
 import { lockedBlockReason } from './lock-state';
 import { resolveDataDir } from './data-dir';
@@ -44,10 +44,11 @@ const HELP = `fk ${CLI_VERSION} — 燧垒保险库命令行
   fk token revoke <id|前缀>              撤销令牌（立即生效）
   fk inject [--in <文件>] [--out <文件>]  把模板里的 {{fk:目标.字段}} 换成真实值
                                          （不给 --in 时读 stdin；--out 写出时 0600）
-  fk agent [run|env|status] [--socket <路径>]
+  fk agent [run|env|status] [--socket <路径>] [--takeover]
                                          SSH agent：run 前台运行（Ctrl+C 停止）；
-                                         env 打印 export SSH_AUTH_SOCK=…；
+                                         env 打印 export SSH_AUTH_SOCK=…（Windows 打印 ssh_config 片段）；
                                          status 查询当前是否有 agent 在跑（免口令）
+                                         --takeover（仅 Windows）：占用系统 agent 管道，ssh 零配置
   fk help                                显示本帮助
 
 通用参数：
@@ -72,7 +73,7 @@ interface Parsed {
 /** 手写解析：只支持 `--k v`、`--k=v`、布尔 `--flag`；CLI 不引第三方依赖 */
 function parseArgs(argv: string[]): Parsed {
   const out: Parsed = { cmd: '', positional: [], flags: {} };
-  const boolFlags = new Set(['json', 'reveal', 'help', 'version']);
+  const boolFlags = new Set(['json', 'reveal', 'help', 'version', 'takeover']);
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     if (a.startsWith('--')) {
@@ -582,7 +583,8 @@ function cmdToken(v: Vault, dataDir: string, parsed: Parsed, json: boolean) {
  */
 function agentSocketPath(dataDir: string, parsed: Parsed): string {
   const custom = parsed.flags.socket ? String(parsed.flags.socket) : '';
-  return path.resolve(custom || path.join(dataDir, 'agent.sock'));
+  const takeover = parsed.flags.takeover === true || process.env.FK_AGENT_TAKEOVER === '1';
+  return agentEndpoint({ dataDir, socketPath: custom || undefined, takeoverSystemAgent: takeover });
 }
 
 function agentGuard(dataDir: string): () => string | null {
@@ -599,7 +601,13 @@ function agentGuard(dataDir: string): () => string | null {
 
 async function cmdAgentRun(v: Vault, dataDir: string, parsed: Parsed, json: boolean): Promise<number> {
   const socketPath = agentSocketPath(dataDir, parsed);
-  const agent = new SshAgent(v, { dataDir, socketPath, guard: agentGuard(dataDir) });
+  const takeover = parsed.flags.takeover === true || process.env.FK_AGENT_TAKEOVER === '1';
+  const agent = new SshAgent(v, {
+    dataDir,
+    socketPath,
+    takeoverSystemAgent: takeover,
+    guard: agentGuard(dataDir),
+  });
   try {
     await agent.listen();
   } catch (e) {
@@ -607,21 +615,29 @@ async function cmdAgentRun(v: Vault, dataDir: string, parsed: Parsed, json: bool
   }
 
   const keys = agent.keys();
+  const isWin = process.platform === 'win32';
   if (json) {
     emitJson({
       socket: socketPath,
+      ...(isWin ? { pipe: socketPath, sshConfig: `IdentityAgent ${pipeToSshConfig(socketPath)}` } : {}),
       pid: process.pid,
       keys: keys.map((k) => ({ name: k.name, algo: k.algo, fingerprint: k.fingerprint })),
     });
   } else {
     emit(`SSH agent 已启动（pid ${process.pid}）`);
-    emit(`socket：${socketPath}`);
+    emit(isWin ? `管道：${socketPath}` : `socket：${socketPath}`);
     emit(
       `密钥：${keys.length} 把${keys.length ? '（' + keys.map((k) => `${k.name}/${k.algo}`).join('，') + '）' : ''}`
     );
     emit('');
-    emit(`用法：export SSH_AUTH_SOCK=${JSON.stringify(socketPath)}`);
-    emit('（Ctrl+C 停止；也可写进 ~/.ssh/config：IdentityAgent ' + JSON.stringify(socketPath) + '）');
+    if (isWin) {
+      // Win32-OpenSSH 不认 SSH_AUTH_SOCK，要靠 IdentityAgent 指到命名管道
+      emit('用法：在 %USERPROFILE%\\.ssh\\config 里加一行（Host * 下即可）：');
+      emit(`  IdentityAgent ${pipeToSshConfig(socketPath)}`);
+    } else {
+      emit(`用法：export SSH_AUTH_SOCK=${JSON.stringify(socketPath)}`);
+      emit('（Ctrl+C 停止；也可写进 ~/.ssh/config：IdentityAgent ' + JSON.stringify(socketPath) + '）');
+    }
     if (!keys.length) emit('提示：还没有带私钥的「SSH 登录」资产，add 后再 fk agent status 看效果');
   }
   process.stderr.write('# agent 只允许本用户进程连接；每次签名都会记入审计日志\n');
@@ -640,6 +656,16 @@ async function cmdAgentRun(v: Vault, dataDir: string, parsed: Parsed, json: bool
 
 function cmdAgentEnv(dataDir: string, parsed: Parsed, json: boolean) {
   const socketPath = agentSocketPath(dataDir, parsed);
+  const isWin = process.platform === 'win32';
+  if (isWin) {
+    const sshConfig = `IdentityAgent ${pipeToSshConfig(socketPath)}`;
+    if (json) return emitJson({ pipe: socketPath, sshConfig });
+    // Windows 没有可 eval 的 export，直接给 ssh_config 片段
+    emit(`Host *`);
+    emit(`  ${sshConfig}`);
+    process.stderr.write('# 先 `fk agent run`；把上面两行写进 %USERPROFILE%\\.ssh\\config 即可让 ssh/git 使用燧垒的密钥\n');
+    return;
+  }
   if (json) return emitJson({ socket: socketPath, export: `export SSH_AUTH_SOCK=${JSON.stringify(socketPath)}` });
   // 只输出可直接 eval 的一行，提示走 stderr，避免污染 $(fk agent env)
   emit(`export SSH_AUTH_SOCK=${JSON.stringify(socketPath)}`);

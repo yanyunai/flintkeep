@@ -29,3 +29,21 @@ jobs:
       - name: HTTP 回归基线
         # 路由顺序即安全语义：拆分/重构后由 56 项断言兜底（自带独立端口与临时数据目录）
         run: npm run smoke:http
+
+  # Windows 兼容性回归：SSH agent 走命名管道、文件权限断言按平台分支，
+  # 这些只有 Windows 上才跑得出来，Linux 那条 job 覆盖不到。
+  windows:
+    runs-on: windows-latest
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 类型检查
+        run: npm run typecheck
+      - name: 单元测试（vitest）
+        run: npm test

@@ -288,7 +288,8 @@ describe('模板注入', () => {
     expect(r.out).toBe('');
     expect(r.err).toContain('已写入');
     expect(fs.readFileSync(dst, 'utf8')).toBe('S=FAKE_KEY_CLI');
-    expect(fs.statSync(dst).mode & 0o777).toBe(0o600);
+    // 0600 只在 POSIX 成立；Windows 没有数字权限
+    if (process.platform !== 'win32') expect(fs.statSync(dst).mode & 0o777).toBe(0o600);
   });
 });
 

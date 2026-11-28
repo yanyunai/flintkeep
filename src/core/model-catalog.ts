@@ -9,7 +9,6 @@
  * 数据源约定：目录价是标价参考；促销以各控制台为准。
  */
 import { spawn } from 'child_process';
-import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { t } from '../shared/i18n';
