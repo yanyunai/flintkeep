@@ -38,6 +38,13 @@ export interface AppSettings {
    */
   mcpFullTools: boolean;
   /**
+   * 允许 Agent 看到密钥明文：false（默认）= 任何 MCP 工具都不返回密码/私钥/密钥字段，
+   * show(reveal=true) 会被拒绝并给出替代路径；true = 允许，且该次读取写审计。
+   * 与 mcpFullTools 正交——打开完整工具集也必须受本开关约束。
+   * 终端取明文不受影响：fk show --reveal / fk env / fk inject。
+   */
+  agentExposeSecrets: boolean;
+  /**
    * 本地 SSH agent：false（默认）= 不启动；
    * true = 解锁后在本机监听 agent.sock，`export SSH_AUTH_SOCK` 后 ssh/git 直接用库里的私钥。
    * 锁定即停止监听——agent 签名等价于「把私钥交给调用方」，不能比界面活得更久。
@@ -60,6 +67,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   proxyAllowHttp: false,
   dailyBackup: true,
   mcpFullTools: false,
+  agentExposeSecrets: false,
   sshAgent: false,
   auditMaxMB: 5,
   auditKeepGenerations: 3,
@@ -73,7 +81,10 @@ export function normalizeLang(v: unknown, fallback: UiLang = DEFAULT_SETTINGS.la
 
 const AGENT_PERMISSIONS: AgentPermission[] = ['readonly', 'normal', 'full'];
 /** 非法值一律回退，避免手写 settings.json 或旧客户端把档位写成别的字符串 */
-export function normalizeAgentPermission(v: unknown, fallback: AgentPermission = DEFAULT_SETTINGS.agentPermission): AgentPermission {
+export function normalizeAgentPermission(
+  v: unknown,
+  fallback: AgentPermission = DEFAULT_SETTINGS.agentPermission
+): AgentPermission {
   return AGENT_PERMISSIONS.includes(v as AgentPermission) ? (v as AgentPermission) : fallback;
 }
 
@@ -102,6 +113,7 @@ export class SettingsStore {
         proxyAllowHttp: normalizeBool(raw.proxyAllowHttp, DEFAULT_SETTINGS.proxyAllowHttp),
         dailyBackup: normalizeBool(raw.dailyBackup, DEFAULT_SETTINGS.dailyBackup),
         mcpFullTools: normalizeBool(raw.mcpFullTools, DEFAULT_SETTINGS.mcpFullTools),
+        agentExposeSecrets: normalizeBool(raw.agentExposeSecrets, DEFAULT_SETTINGS.agentExposeSecrets),
         sshAgent: normalizeBool(raw.sshAgent, DEFAULT_SETTINGS.sshAgent),
         auditMaxMB: clampRange(raw.auditMaxMB, 1, 100, DEFAULT_SETTINGS.auditMaxMB),
         auditKeepGenerations: clampRange(raw.auditKeepGenerations, 0, 10, DEFAULT_SETTINGS.auditKeepGenerations),
@@ -115,7 +127,8 @@ export class SettingsStore {
   set(patch: Partial<AppSettings>): AppSettings {
     const cur = this.get();
     const next: AppSettings = {
-      closeAction: patch.closeAction === 'quit' ? 'quit' : patch.closeAction === 'background' ? 'background' : cur.closeAction,
+      closeAction:
+        patch.closeAction === 'quit' ? 'quit' : patch.closeAction === 'background' ? 'background' : cur.closeAction,
       autoLockMinutes: patch.autoLockMinutes === undefined ? cur.autoLockMinutes : clampMinutes(patch.autoLockMinutes),
       agentPermission: normalizeAgentPermission(patch.agentPermission, cur.agentPermission),
       allowLockedAccess: normalizeBool(patch.allowLockedAccess, cur.allowLockedAccess),
@@ -123,8 +136,10 @@ export class SettingsStore {
       proxyAllowHttp: normalizeBool(patch.proxyAllowHttp, cur.proxyAllowHttp),
       dailyBackup: normalizeBool(patch.dailyBackup, cur.dailyBackup),
       mcpFullTools: normalizeBool(patch.mcpFullTools, cur.mcpFullTools),
+      agentExposeSecrets: normalizeBool(patch.agentExposeSecrets, cur.agentExposeSecrets),
       sshAgent: normalizeBool(patch.sshAgent, cur.sshAgent),
-      auditMaxMB: patch.auditMaxMB === undefined ? cur.auditMaxMB : clampRange(patch.auditMaxMB, 1, 100, cur.auditMaxMB),
+      auditMaxMB:
+        patch.auditMaxMB === undefined ? cur.auditMaxMB : clampRange(patch.auditMaxMB, 1, 100, cur.auditMaxMB),
       auditKeepGenerations:
         patch.auditKeepGenerations === undefined
           ? cur.auditKeepGenerations
@@ -134,7 +149,11 @@ export class SettingsStore {
     const tmp = this.file + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(next, null, 2), { encoding: 'utf8', mode: 0o600 });
     fs.renameSync(tmp, this.file);
-    try { fs.chmodSync(this.file, 0o600); } catch { /* Windows 等平台忽略 */ }
+    try {
+      fs.chmodSync(this.file, 0o600);
+    } catch {
+      /* Windows 等平台忽略 */
+    }
     return next;
   }
 }

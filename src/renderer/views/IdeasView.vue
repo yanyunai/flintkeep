@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * 灵感池（模板版）
- * 规格见 docs/opc-spec/01-ideas.md；评分算法在 ./idea/score.ts，与旧版逐字一致。
+ * 规格见内部规格稿；评分算法在 ./idea/score.ts，与旧版逐字一致。
  * 数据走 collections.ideas，不再依赖 iframe 里的 workbench 状态。
  */
 import { computed, onMounted, ref } from 'vue';
@@ -27,7 +27,12 @@ type Idea = {
 
 /** 状态与维度名存的是中文（历史数据），展示时按语言翻译 */
 const STATUSES = ['待评估', '验证中', '已立项', '已放弃'] as const;
-const STATUS_KEY: Record<string, string> = { 待评估: 'review', 验证中: 'testing', 已立项: 'approved', 已放弃: 'dropped' };
+const STATUS_KEY: Record<string, string> = {
+  待评估: 'review',
+  验证中: 'testing',
+  已立项: 'approved',
+  已放弃: 'dropped',
+};
 function statusText(s: string): string {
   const k = STATUS_KEY[s];
   return k ? tr(('idea.st.' + k) as any) : s;
@@ -164,7 +169,9 @@ onMounted(load);
       <div class="page-head">
         <div>
           <div class="kicker">{{ tr('idea.kicker') }}</div>
-          <div class="page-title">{{ tr('idea.title') }} <span class="cnt">[ {{ ideas.length }} ]</span></div>
+          <div class="page-title">
+            {{ tr('idea.title') }} <span class="cnt">[ {{ ideas.length }} ]</span>
+          </div>
         </div>
         <span class="sp"></span>
         <button class="btn primary" @click="openNew">{{ tr('idea.new') }}</button>
@@ -180,14 +187,19 @@ onMounted(load);
           <button class="chip" :class="{ on: filter === '' }" @click="filter = ''">
             {{ tr('idea.all') }} <span class="c">{{ counts[''] }}</span>
           </button>
-          <button
-            v-for="s in STATUSES"
-            :key="s"
-            class="chip"
-            :class="{ on: filter === s }"
-            @click="filter = s"
-          >
-            <i :style="{ background: s === '待评估' ? 'var(--text-3)' : s === '验证中' ? 'var(--info)' : s === '已立项' ? 'var(--ok)' : 'var(--danger)' }"></i>
+          <button v-for="s in STATUSES" :key="s" class="chip" :class="{ on: filter === s }" @click="filter = s">
+            <i
+              :style="{
+                background:
+                  s === '待评估'
+                    ? 'var(--text-3)'
+                    : s === '验证中'
+                      ? 'var(--info)'
+                      : s === '已立项'
+                        ? 'var(--ok)'
+                        : 'var(--danger)',
+              }"
+            ></i>
             {{ statusText(s) }} <span class="c">{{ counts[s] }}</span>
           </button>
         </div>
@@ -219,12 +231,7 @@ onMounted(load);
             <div v-for="d in DIMS" :key="d.k" class="dim">
               <span class="dk">{{ dimLabel(d.k) }}</span>
               <span class="dv">
-                <i
-                  v-for="n in dots(d.k, 5)"
-                  :key="n"
-                  class="dot"
-                  :class="{ on: n <= ((i as any)[d.k] ?? 3) }"
-                ></i>
+                <i v-for="n in dots(d.k, 5)" :key="n" class="dot" :class="{ on: n <= ((i as any)[d.k] ?? 3) }"></i>
               </span>
               <em class="dn">{{ dimText(d.k, i) }}</em>
             </div>
@@ -248,67 +255,69 @@ onMounted(load);
 
     <!-- 新增 / 编辑：Teleport 到 body，避免被 .app 的 transform 影响定位 -->
     <Teleport to="body">
-    <div
-      v-if="editing"
-      class="modal"
-      :class="{ 'mg-modal mg-center': true }"
-      data-mgui
-      :data-template="uiTemplate"
-      :data-theme="uiTheme"
-      @click.self="closeForm"
-    >
-      <div class="box idea-form">
-        <header class="if-head">
-          <h3>{{ editing === 'new' ? tr('idea.new') : tr('idea.edit') }}</h3>
-          <button class="if-x" @click="closeForm">×</button>
-        </header>
+      <div
+        v-if="editing"
+        class="modal"
+        :class="{ 'mg-modal mg-center': true }"
+        data-mgui
+        :data-template="uiTemplate"
+        :data-theme="uiTheme"
+        @click.self="closeForm"
+      >
+        <div class="box idea-form">
+          <header class="if-head">
+            <h3>{{ editing === 'new' ? tr('idea.new') : tr('idea.edit') }}</h3>
+            <button class="if-x" @click="closeForm">×</button>
+          </header>
 
-        <label class="set-field">
-          <span>{{ tr('idea.f.title') }}</span>
-          <input v-model="form.title" :placeholder="tr('idea.ph.title')" @keyup.enter="save" />
-        </label>
-        <label class="set-field">
-          <span>{{ tr('idea.f.desc') }}</span>
-          <textarea v-model="form.desc" rows="2" :placeholder="tr('task.f.optionalPh')"></textarea>
-        </label>
+          <label class="set-field">
+            <span>{{ tr('idea.f.title') }}</span>
+            <input v-model="form.title" :placeholder="tr('idea.ph.title')" @keyup.enter="save" />
+          </label>
+          <label class="set-field">
+            <span>{{ tr('idea.f.desc') }}</span>
+            <textarea v-model="form.desc" rows="2" :placeholder="tr('task.f.optionalPh')"></textarea>
+          </label>
 
-        <div v-for="d in DIMS" :key="d.k" class="dim-row">
-          <span class="dk">{{ dimLabel(d.k) }}</span>
-          <input
-            type="range"
-            min="1"
-            max="5"
-            step="1"
-            :value="(form as any)[d.k]"
-            @input="(form as any)[d.k] = Number(($event.target as HTMLInputElement).value)"
-          />
-          <em>{{ (form as any)[d.k] }}</em>
-          <span v-if="d.rev" class="rev">{{ tr('idea.rev') }}</span>
+          <div v-for="d in DIMS" :key="d.k" class="dim-row">
+            <span class="dk">{{ dimLabel(d.k) }}</span>
+            <input
+              type="range"
+              min="1"
+              max="5"
+              step="1"
+              :value="(form as any)[d.k]"
+              @input="(form as any)[d.k] = Number(($event.target as HTMLInputElement).value)"
+            />
+            <em>{{ (form as any)[d.k] }}</em>
+            <span v-if="d.rev" class="rev">{{ tr('idea.rev') }}</span>
+          </div>
+
+          <div class="st-row">
+            <span class="dk">{{ tr('idea.f.status') }}</span>
+            <button
+              v-for="s in STATUSES"
+              :key="s"
+              class="st-chip"
+              :class="{ on: form.status === s }"
+              @click="form.status = s"
+            >
+              {{ statusText(s) }}
+            </button>
+          </div>
+
+          <div class="score-preview">
+            {{ tr('idea.scoreLabel') }} <b :style="{ color: scoreColor(ideaScore(form)) }">{{ ideaScore(form) }}</b>
+          </div>
+
+          <footer class="if-foot">
+            <button v-if="editing !== 'new'" class="if-del" @click="remove(form)">{{ tr('assets.btn.delete') }}</button>
+            <span class="sp"></span>
+            <button class="btn" @click="closeForm">{{ tr('common.btn.cancel') }}</button>
+            <button class="btn primary" @click="save">{{ tr('common.btn.save') }}</button>
+          </footer>
         </div>
-
-        <div class="st-row">
-          <span class="dk">{{ tr('idea.f.status') }}</span>
-          <button
-            v-for="s in STATUSES"
-            :key="s"
-            class="st-chip"
-            :class="{ on: form.status === s }"
-            @click="form.status = s"
-          >{{ statusText(s) }}</button>
-        </div>
-
-        <div class="score-preview">
-          {{ tr('idea.scoreLabel') }} <b :style="{ color: scoreColor(ideaScore(form)) }">{{ ideaScore(form) }}</b>
-        </div>
-
-        <footer class="if-foot">
-          <button v-if="editing !== 'new'" class="if-del" @click="remove(form)">{{ tr('assets.btn.delete') }}</button>
-          <span class="sp"></span>
-          <button class="btn" @click="closeForm">{{ tr('common.btn.cancel') }}</button>
-          <button class="btn primary" @click="save">{{ tr('common.btn.save') }}</button>
-        </footer>
       </div>
-    </div>
     </Teleport>
   </div>
 </template>

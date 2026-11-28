@@ -14,6 +14,9 @@ data-smoke-wl-tmp/
 # 本地 IDE/Agent 数据
 .codebuddy/
 .zwork/
+.zwork-tmp/
+.dumate/
+runs/
 .vscode/
 .idea/
 

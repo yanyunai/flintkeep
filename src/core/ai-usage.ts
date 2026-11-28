@@ -1507,7 +1507,7 @@ export function decideFreeQuotas(opts: {
 
 /**
  * 从百炼的 Base URL 里提取业务空间 ID。
- * 形如 `https://ws-abcdef1234567890.cn-beijing.maas.aliyuncs.com` → `ws-abcdef1234567890`。
+ * 形如 `https://ws-2np8a7gkhwzg8ww2.cn-beijing.maas.aliyuncs.com` → `ws-2np8a7gkhwzg8ww2`。
  * 业务空间是判断「这个 CLI 身份属于哪个阿里云账号」的关键线索。
  */
 export function extractWorkspaceId(url?: string | null): string | undefined {

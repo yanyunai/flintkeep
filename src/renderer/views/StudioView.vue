@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 机房页（自有实现，替代 vendor 旧版工作台-opc）
+ * 机房页（自有实现，替代 vendor workstation-opc）
  * - 项目 = 资产库 type=project；服务器 = type=server；本机运行态 = /api/myprojects + SSE
  * - 场景：机房机柜 / 办公室工位，外观走 design/system 的 room/office 语义类
  * - 操作：打开入口 URL、服务器 TCP 检测、签发 SSH 代理、启停本机运行项目

@@ -1,0 +1,22 @@
+# CODEOWNERS
+# 作用：PR 自动请求对应 owner 复核；配合 GitHub 分支保护（Require review from Code Owners）才具强制性。
+# 规则见 docs/21-开发约定与仓库推送规则.md §2 与 §5.5。
+
+# 默认：所有改动都要维护者过一眼
+* @yanyunai
+
+# 以下路径改错会丢数据或破安全边界，必须复核
+/src/core/vault.ts @yanyunai
+/src/core/file-lock.ts @yanyunai
+/src/server/security-routes.ts @yanyunai
+/src/server/session.ts @yanyunai
+/electron/main.mjs @yanyunai
+/electron/preload.mjs @yanyunai
+
+# 发布与规则本身
+/scripts/repo-guard.mjs @yanyunai
+/scripts/repo-guard.allow.json @yanyunai
+/scripts/release-public.mjs @yanyunai
+/.githooks/ @yanyunai
+/docs/20-仓库体系与发布流程.md @yanyunai
+/docs/21-开发约定与仓库推送规则.md @yanyunai

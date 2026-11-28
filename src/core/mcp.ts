@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as readline from 'readline';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { Vault, NeedSecretKeyError } from './vault';
-import { AssetType, fieldKindLabel, fieldNameLabel } from './schema';
+import { AssetType, fieldKindLabel, fieldNameLabel, SECRET_FIELDS } from './schema';
 import { TOOL_SPECS, TOOL_SPECS_V2, V2_TOOL_NAMES, MCP_INSTRUCTIONS, normalizeAssetType } from './mcp-meta';
 import { resolveProxyBaseUrl, buildProxyInjection } from './proxy';
 import { AssetTypeStore } from './asset-types';
@@ -122,6 +122,83 @@ function failWith(
 /** 工具执行失败按 MCP 规范回 isError，避免 Agent 把 {error:...} 当成一次成功调用 */
 function fail(content: any) {
   return { ...ok(content), isError: true };
+}
+
+/**
+ * 旧工具名 → 新入口。默认 tools/list 不下发这些名字（只给 9 个任务入口），
+ * 但 Agent 可能从旧会话记忆或旧技能里直接调用；这里统一转接，保证同名调用拿不到明文。
+ */
+const LEGACY_TO_NEW: Record<string, { to: 'show' | 'connect'; args: (a: any) => Record<string, any> }> = {
+  get_asset: {
+    to: 'show',
+    args: (a) => {
+      const target = a?.id ?? a?.target ?? (a?.type !== undefined && a?.no !== undefined ? `${a.type}:${a.no}` : '');
+      return {
+        target,
+        ...(a?.reveal === true ? { reveal: true } : {}),
+        ...(a?.fields ? { fields: a.fields } : {}),
+      };
+    },
+  },
+  get_server_connection: {
+    to: 'connect',
+    args: (a) => ({ target: a?.target ?? a?.id ?? '' }),
+  },
+};
+
+/** 递归剥掉密钥字段：总开关关闭时兜住所有工具的回显（增改回显、版本历史、备份导出） */
+function stripSecretFields(node: any): any {
+  if (Array.isArray(node)) return node.map(stripSecretFields);
+  if (!node || typeof node !== 'object') return node;
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(node)) {
+    if ((SECRET_FIELDS as string[]).includes(k)) continue;
+    if (k === 'extra' && v && typeof v === 'object' && !Array.isArray(v)) {
+      const extra: Record<string, any> = {};
+      for (const [ek, ev] of Object.entries(v as Record<string, any>)) {
+        // 用户自定义字段里的敏感键（cf_password 之类）同样不能出站
+        if (/^(password|passwd|pwd|secret|privateKey|apiKey|accessKey|secretKey|token)$/i.test(ek)) continue;
+        extra[ek] = stripSecretFields(ev);
+      }
+      out[k] = extra;
+      continue;
+    }
+    out[k] = stripSecretFields(v);
+  }
+  return out;
+}
+
+/** 对响应正文做兜底剥离：isError 与 content 结构不动，只替换 text 里的 JSON */
+function stripSecretFieldsFromResponse(res: any): any {
+  const t = res?.content?.[0]?.text;
+  if (typeof t !== 'string' || !t) return res;
+  let parsed: any;
+  try {
+    parsed = JSON.parse(t);
+  } catch {
+    return res;
+  }
+  const clean = stripSecretFields(parsed);
+  return { ...res, content: [{ ...res.content[0], text: JSON.stringify(clean) }] };
+}
+
+/** 被转接的旧调用：结果原样返回，另附 deprecated / hint / next，让 Agent 下次直接走新入口 */
+function withDeprecatedNotice(res: any, oldName: string, newName: string, nextArgs: Record<string, any>) {
+  const t = res?.content?.[0]?.text;
+  let body: any;
+  try {
+    body = t ? JSON.parse(t) : {};
+  } catch {
+    body = { raw: t };
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) body = { result: body };
+  const merged = {
+    ...body,
+    deprecated: oldName,
+    hint: `${oldName} 已停用，本次已按 ${newName} 执行；后续直接调用 ${newName}`,
+    next: { tool: newName, args: nextArgs },
+  };
+  return { ...res, content: [{ type: 'text', text: JSON.stringify(merged) }] };
 }
 
 /** 权限档位：默认 full；读设置失败也回落 full，保证旧配置行为不变 */
@@ -473,6 +550,18 @@ async function handleNativeV2(name: string, args: any) {
     const r = resolveAssetTarget(String(args?.target || ''));
     if (!r.asset) return notFound(String(args?.target || ''), r.candidates);
     if (args?.reveal === true) {
+      // 总开关默认关闭：明文的唯一出口是「用户明确要求 + 设置允许」。
+      // 拒绝时仍返回脱敏内容，Agent 不用再发一次 show 就能继续做事。
+      if (currentSettings().agentExposeSecrets !== true) {
+        const masked = vault.list().find((a) => a.id === r.asset!.id);
+        return failWith(
+          'secret.exposure_disabled',
+          '「允许 Agent 查看密钥」当前为关闭状态，show 不返回明文',
+          '取用凭证用 connect（短期凭据，真密钥不进上下文）；确需原文时让用户在桌面端「设置 → 后台与锁定」打开该开关，或在终端用 fk show --reveal / fk env / fk inject',
+          { tool: 'show', args: { target: String(args?.target || '') } },
+          { asset: projectFields(masked, args?.fields, ['id', 'type', 'name']) }
+        );
+      }
       const full = vault.get(r.asset.id); // 写审计
       return full
         ? ok(projectFields(full, args?.fields, ['id', 'type', 'name']))
@@ -640,6 +729,7 @@ const TOKEN_INSTRUCTIONS = [
   '- show(target)：单条脱敏详情（不含任何密钥）',
   '- connect(target, mode)：换短期凭据。server/ssh_key → 可直接粘贴的 ssh 命令；其它类型 → 代理地址 + 令牌',
   '不要尝试 manage / run_project / sync_whitelist / backup：会返回 token.tool_denied。',
+  '不要调用 get_asset / get_server_connection（旧名，已停用）：令牌模式直接拒绝，用上面的 find / show / connect。',
   'scope 之外的资产返回 token.scope —— 这不是参数错误，重试无用；需要更多权限请找人重签令牌。',
 ].join('\n');
 
@@ -716,7 +806,16 @@ async function handleTokenCall(name: string, args: any, tm: { token: string; bas
   }
 }
 
-export async function handleCall(name: string, args: any) {
+/** 对外入口：先跑工具，再按总开关做密钥兜底剥离 */
+export async function handleCall(name: string, args: any): Promise<any> {
+  const res = await handleCallInner(name, args);
+  // 总开关关闭（默认）时，任何工具都不带回密钥字段：show(reveal) 已在源头拒绝，
+  // 这里再兜一层，覆盖 add/update 回显、版本历史、备份导出这些旁路。
+  if (currentSettings().agentExposeSecrets === true) return res;
+  return stripSecretFieldsFromResponse(res);
+}
+
+async function handleCallInner(name: string, args: any): Promise<any> {
   // 目标参数统一：show/connect 用 target，manage/run_project 用 id。
   // Agent 记不住两套名字（真实使用里就踩了「history 需要 id」），这里双向补齐，任一个都能用。
   if (args && typeof args === 'object') {
@@ -725,6 +824,15 @@ export async function handleCall(name: string, args: any) {
     if (t && args.target === undefined) args = { ...args, target: t };
   }
   if (tokenMode) return handleTokenCall(name, args, tokenMode);
+
+  // 旧工具名：转到新入口，结果里补 deprecated / next。
+  // 放在 tokenMode 之后：令牌模式仍按原规则拒绝，不因转接而扩大权限。
+  const legacy = LEGACY_TO_NEW[name];
+  if (legacy) {
+    const nextArgs = legacy.args(args);
+    const mapped = await handleCallInner(legacy.to, nextArgs);
+    return withDeprecatedNotice(mapped, name, legacy.to, nextArgs);
+  }
 
   const perm = currentPermission();
 

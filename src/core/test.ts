@@ -1106,7 +1106,7 @@ async function run() {
   assert(d7.quotas === undefined && d7.stale === false, '未绑定 CLI：一律不显示额度（即使有历史残留也清空）');
 
   assert(
-    extractWorkspaceId('https://ws-abcdef1234567890.cn-beijing.maas.aliyuncs.com') === 'ws-abcdef1234567890',
+    extractWorkspaceId('https://ws-2np8a7gkhwzg8ww2.cn-beijing.maas.aliyuncs.com') === 'ws-2np8a7gkhwzg8ww2',
     '从 Base URL 提取业务空间 ID（判断 CLI 身份归属的依据）'
   );
   assert(extractWorkspaceId('') === undefined && extractWorkspaceId(undefined) === undefined, '空 Base URL 返回 undefined');

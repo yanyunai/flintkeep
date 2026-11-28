@@ -52,7 +52,7 @@ const tab = ref<'myprojects' | 'assets' | 'studio' | 'aiusage' | 'audit' | 'mcp'
 
 /**
  * 侧栏「工作台」分组的入口顺序与文案。
- * 这些原来指向 旧版工作台内嵌页 的 iframe 页面，现在全部是自有页面。
+ * 这些原来指向 vendor/workstation-opc 的 iframe 页面，现在全部是自有页面。
  * icon：src/renderer/ui/icons.ts 里的线性 SVG 图标 key（此前这些动态项只能用 ◦ 占位）。
  */
 const OPC_PAGES = [
@@ -5535,7 +5535,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* ===== 视觉体系 v2（对标 旧版工作台-OPC 的质感，自写实现）=====
+/* ===== 视觉体系 v2（对标 workstation-OPC 的质感，自写实现）=====
    平底浅灰页面 + 白卡片 + 细边框 + 圆角 + 深色主按钮；列表=卡片化表格 */
 .app {
   width: 100%;
@@ -7738,7 +7738,7 @@ html:has(.ai-page) { scrollbar-gutter: auto; }
 
 /* ===== 语义化颜色令牌：组件一律用变量，深色模式只改这一处 ===== */
 :root {
-  /* 浅色令牌与工作台（旧版工作台-OPC）暖灰系对齐：--surface=其--panel、--border=其--line、--accent=其--blue */
+  /* 浅色令牌与工作台（workstation-OPC）暖灰系对齐：--surface=其--panel、--border=其--line、--accent=其--blue */
   --surface: #ffffff;        /* 卡片 / 弹窗 / 输入框 */
   --surface-2: #f3f3f2;      /* 次级底：表头、代码块、侧栏（= 其 --fill） */
   --surface-3: #f9f9f8;      /* 更浅一级：操作栏 */

@@ -104,17 +104,23 @@ npm run dev
 
 ## MCP 工具清单（Agent 可调用的工具）
 
-- `list_assets` / `search_assets`：列出/搜索资产（脱敏元数据）
-- `get_asset` / `get_server_connection`：取单条明文凭证 / 按名称或 IP 取服务器连接信息（均写审计）
-- `add_asset` / `update_asset` / `delete_asset`：增删改资产
-- `log_agent_action`：Agent 取完凭证后上报“它做了什么”（写审计，补全“取后行为”）
-- `export_backup` / `import_backup`：导出/导入自包含加密备份（迁移或冷备）
-- `request_proxy_access`：Model B HTTP，为资产签发短期代理令牌与代理基址（真实密钥由代理注入，不进 Agent 上下文）
-- `request_ssh_access`：Model B SSH，为 server 资产签发本地堡垒令牌（`ssh -p <proxyPort> <token>@127.0.0.1`）
-- `whitelist_status` / `whitelist_sync`：查白名单状态（当前公网 IP、绑定列表、调度配置）/ 手动触发一次同步（写审计）
-- `ai_usage_snapshot`：查模型用量快照（余额/消费/免费额度，读本地缓存，不打云 API）
+标准路径是「找 → 看 → 用」，`initialize` 下发的 instructions 里写着同样的话：
 
-备忘录即 `note` 类型资产，可直接用 `add_asset` / `update_asset` / `search_assets`（正文可被搜索）维护。
+- `find` / `show` / `connect`：找资产 → 看详情（默认脱敏，不含任何密钥字段）→ 换短期凭据。
+  `connect` 返回可直接执行的 `ssh` 命令，或代理地址 + 令牌；真实密钥由本地代理注入，不进 Agent 上下文。
+- `manage` / `run_project` / `sync_whitelist` / `usage` / `note` / `backup`：其余任务入口。
+  注意 `usage` 是模型用量快照，不是使用说明。
+
+默认只下发这 9 个入口。需要字段/类型/集合等配置能力时，在设置里打开「完整工具集」；
+其中 `get_asset`、`get_server_connection` **已停用**，调用会被转到 `show` / `connect`，结果里带
+`deprecated` 与 `next`，指向该用的新工具。
+
+**Agent 默认拿不到明文。** 要看密码/私钥原文，只有两个出口：
+
+- 桌面端：在设置里打开「允许 Agent 查看密钥」后，`show(target, reveal=true)` 才返回明文并写审计；
+- 终端：`fk show --reveal` / `fk env` / `fk inject`，不受这个开关限制。
+
+备忘录即 `note` 类型资产，正文可被 `find` 搜索到。
 
 REST 另有：`GET /api/backup/export`、`POST /api/backup/import {backup, passphrase}`、`POST /api/agent-action {description, meta}`、`POST /api/proxy/issue {assetId, ttl}`、`POST /api/ssh/issue {assetId, ttl}`、`GET /api/rotation`、`GET /api/audit`、`POST /api/unlock {passphrase}`、`POST /api/lock`（手动锁定）、`GET|PUT /api/settings`（关窗行为/自动锁定）、`POST /api/activity`（活动心跳）。独立端口：HTTP 代理默认 `PORT+1`=8788；SSH 堡垒默认 `SSH_PROXY_PORT`=8789。
 

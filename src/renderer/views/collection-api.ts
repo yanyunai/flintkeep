@@ -1,7 +1,7 @@
 /**
  * 收支 / 成本 / 任务 / 资料证书 / 灵感池 的统一数据出口。
  *
- * 这几类业务数据从原作者（旧版工作台-OPC）时代起就存在**同一个集合**里：
+ * 这几类业务数据从赛博老爸（workstation-OPC）时代起就存在**同一个集合**里：
  *   collections/workbench = { revenue, costs, tasks, docs, ideas, chats, settings }
  * 机房场景的 iframe 每存一次盘就把这一整包写回来。
  *

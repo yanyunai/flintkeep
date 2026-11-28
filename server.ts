@@ -36,6 +36,7 @@ import { handleSecurityRoutes } from './src/server/security-routes';
 import { handleOpsRoutes } from './src/server/ops-routes';
 import { handleAssistantRoutes } from './src/server/assistant-routes';
 import { handleWhitelistRoutes } from './src/server/whitelist-routes';
+import { handleUpdateRoutes } from './src/server/update-routes';
 import { AI_PROVIDER_MAP } from './src/server/ai-provider-map';
 import { sessionCookie, clearSessionCookie, sessionOk, issueSession, revokeSession } from './src/server/session';
 
@@ -440,6 +441,10 @@ function createHttpServer(): http.Server {
       if (p === '/api/system/stats' && req.method === 'GET') {
         return send(res, 200, await getSystemStats());
       }
+
+      // ===== 关于 / 更新检查（src/server/update-routes.ts）=====
+      // 放在解锁门之前：about 是静态元数据，锁态也该能看；update/check 自己在模块里判锁定
+      if (await handleUpdateRoutes({ vault, req, res, p })) return;
 
       const v = vault;
       if (!v) {

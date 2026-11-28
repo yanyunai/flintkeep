@@ -9,7 +9,7 @@
  *
  * 正确做法：主进程只负责窗口，后端 server.ts 用独立子进程启动。
  */
-import { app, BrowserWindow, Tray, Menu, nativeImage, session } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, session, ipcMain, shell } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
@@ -379,6 +379,8 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      // 只暴露 openExternal 一个能力（见 electron/preload.mjs）
+      preload: path.join(__dirname, 'preload.mjs'),
     },
   });
   win.once('ready-to-show', () => win.show()); // 就绪后再显示，避免白屏闪烁
@@ -387,6 +389,17 @@ function createWindow() {
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', (e, url) => {
     if (!String(url).startsWith(appOrigin)) e.preventDefault();
+  });
+  // 外部链接：只允许 http/https，交给系统浏览器打开（渲染层走 preload 的 openExternal）
+  ipcMain.handle('fk:openExternal', async (_e, url) => {
+    const target = String(url || '');
+    if (!/^https?:\/\//i.test(target)) return false;
+    try {
+      await shell.openExternal(target);
+      return true;
+    } catch {
+      return false;
+    }
   });
   // 这个应用不需要摄像头/麦克风/通知等任何浏览器权限，一律拒绝
   try {
